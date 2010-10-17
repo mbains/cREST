@@ -4,3 +4,12 @@ The source for the extension is bundled into a maven JEE
 project and can be found in src/main/webapp/ext. The maven
 project is a Jersey based RESTful service that is used to
 easily test the extension.
+
+If you'd like to get the project setup the way i did, ensure you 
+have eclipse helios with WTP, and maven. 
+
+mvn eclipse:eclipse - this will create your eclipse project so you
+can import it. 
+
+mvn jetty:run - this will run the RESTful test service so you can
+easily test the plugin. 
