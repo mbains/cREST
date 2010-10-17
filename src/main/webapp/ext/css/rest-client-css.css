@@ -1,0 +1,178 @@
+header h1 {
+ background: url(../icons/_32.png) no-repeat left;
+ height: 30px;
+ margin-bottom: 10px;
+ margin-top: 0px;
+ padding-left: 30px;
+ padding-top: 5px;
+ text-align: left;
+}
+
+.mybuttontextsize {
+	font-size: 13px;
+}
+
+.crest-ui-autocomplete-input {
+	margin-bottom: 0px;
+	margin-right: 0px;
+	padding:5px 8px 0 6px;
+	background:#fff;
+	border:1px solid #ccc;
+	border-bottom-color:#999;
+	border-right:none;
+	color:#000;
+	font:12px;
+	height:23px;
+	vertical-align:middle;
+	outline-width:0;
+	width: 99%;
+	position: relative;
+}
+
+.crest-ui-autocomplete-input-button {
+	background-position: 50% 100%;
+	height: 32px;
+	vertical-align:middle;
+	z-index: 101;
+}
+.crest-ui-autocomplete-input-lft {
+	margin-bottom: 0px;
+	margin-right: 0px;
+	padding:5px 0px 0px 0px;
+	background:#fff;
+	border:1px solid #ccc;
+	border-bottom-color:#999;
+	border-left:none;
+	color:#000;
+	font:12px;
+	height:24px;
+	vertical-align:middle;
+	outline-width:0;
+	width: 100%;
+	position: relative;
+}
+
+.crest-ui-autocomplete-input-button-lft {
+	background-position: 50% 100%;
+	height: 32px;
+	vertical-align:middle;
+	z-index: 101;
+}
+pre,code {
+	font-family: monospace;
+	font-size: 12px;
+	line-height: 100%;
+	padding: 0px;
+	margin: 0px;
+	outline-width:0;
+}
+
+textarea {
+	width:99%;
+	font-family: monospace;
+	font-size: 12px;
+	outline-width:0;
+}
+textarea.edit_history {
+	height:97%;
+	width:99%;
+}
+
+
+textarea.request_headers {
+	line-height:1;
+	min-height:100px;
+}
+a {
+	outline-width:0;
+}
+
+.respFormatting {
+	border 0px solid black;
+	padding: 0px;
+	margin-top: 10px;
+}
+.respHeaderName {
+	font-weight: bold;
+	color: navy;	
+}
+.respHeaderValue {
+	font-weight: normal;
+	color: maroon;
+}
+div.respTitle { 
+	outline-width:0; 
+	padding-top: 5px; 
+	padding-left: 10px; 
+	color: white; 
+	text-decoration: none; 
+	font-weight: normal; 
+	font-size: 14px; 
+}
+h2.responseHeader {
+	margin-left: 10px;
+}
+span.responseDataHeader {
+	padding:0px;
+	margin:0px;
+	font-size: 15px;
+	font-weight: bold;
+}
+html {
+    overflow-y: scroll;
+}
+.resp_processing {
+ background: url(../images/pleasewait.gif) no-repeat center 5px;
+ height: 30px;
+ padding-top: 15px;
+ text-align: center;
+ width: 100%;
+}
+
+.requestBuilder {
+	padding: 15px;
+}
+.title1 {
+	outline-width:0; 
+	padding-top: 5px; 
+	padding-left: 10px; 
+	color: white; 
+	text-decoration: none; 
+	font-weight: normal; 
+	font-size: 17px;
+}
+.title2 {
+	/*border-bottom: 1px solid #A6C9E2;*/
+	font-size: 13px; 
+	font-weight: bold; 
+	padding-bottom:3px;
+	margin-bottom:3px;
+}
+
+/*
+Note: font size controls the size of
+my buttons, but the ones with text and
+the image ones!
+*/
+.reqBuidlerButtons {
+	font-size: 13.5px;
+}
+.respButtons {
+	font-size: 12px;/*actually sets size of buttons!*/
+	padding:0px;
+	padding-top:4px;
+	padding-right: 4px;
+	margin:0px;
+	float:right;
+	border: 0px solid black; 
+	/*width: 101px;*/ 
+}
+
+body{ 
+	font-size: 12px;
+	font-family: "Trebuchet MS", sans-serif;
+	margin-left: 15px;
+	margin-right: 15px;
+	margin-bottom: 15px;
+}
+

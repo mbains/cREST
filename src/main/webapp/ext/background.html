@@ -1,0 +1,28 @@
+<html>
+	<head>
+		<script>
+			var restClientURL = "chrome-extension://"+location.host+"/index.html";
+			function selectOrOpenRestClient() {
+				
+				chrome.tabs.getAllInWindow(undefined, function(tabs) {
+					for (var i = 0, tab; tab = tabs[i]; i++) {
+			      		if(tab.url && tab.url == restClientURL) {
+			        		chrome.tabs.update(tab.id, {selected: true});
+			        		return;
+			      		}
+			    	}
+			    chrome.tabs.create({url: restClientURL});
+			  });
+			}
+			chrome.browserAction.onClicked.addListener(function(tab) {
+				//for now let's just open a new tab when the user wants later
+				//maybe i add options for user to choose whether they want multiple tabs
+				//or to open existing
+				chrome.tabs.create({url: restClientURL});
+				//selectOrOpenRestClient();
+			});
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

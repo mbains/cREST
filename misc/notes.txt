@@ -1,0 +1,28 @@
+mvn  eclipse:clean eclipse:eclipse -DdownloadSources=true -DdownloadJavadocs=true
+
+
+http://www.google.com
+http://www.jonnyi.com
+http://www.yahoo.com
+
+====================================================================================
+*mvn archetype:generate -DarchetypeCatalog=http://download.java.net/maven/2
+
+Choose archetype:
+1: http://download.java.net/maven/2 -> jersey-quickstart-grizzly (Archetype for creating a RESTful web application with Jersey and Grizzly)
+2: http://download.java.net/maven/2 -> jersey-quickstart-webapp (Archetype for creating a Jersey based RESTful web application with WAR packaging)
+3: http://download.java.net/maven/2 -> jersey-quickstart-ejb (Archetype for creating a Jersey based RESTful EJB application with WAR packaging)
+4: http://download.java.net/maven/2 -> jsf2-simple-example-archetype (Simple JSF project with no non-JavaEE dependencies)
+*Choose a number:  (1/2/3/4): 2
+*Define value for groupId: : com.jonnyi.sampleservice
+*Define value for artifactId: : sample_service
+*Define value for version:  1.0-SNAPSHOT: : 
+*Define value for package:  com.jonnyi.sampleservice: : com.jonnyi.sampleservice
+Confirm properties configuration:
+groupId: com.jonnyi.sampleservice
+artifactId: sample_service
+version: 1.0-SNAPSHOT
+package: com.jonnyi.sampleservice
+*Y: : y
+
+Run the service:

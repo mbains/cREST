@@ -1,0 +1,68 @@
+{
+    "parents": [
+        {
+            "id": 1234,
+            "living": true,
+            "number": 1421.23,
+            "name": "My Parent's Name",
+            "value": "My Parent's Value",
+            "childCollection": {
+                "children": [
+                    {
+                        "id": 2001,
+                        "living": true,
+                        "number": 1580.77,
+                        "name": "My Child's Name",
+                        "value": "My Child's Value"
+                    },
+                    {
+                        "id": 2002,
+                        "living": false,
+                        "number": 1581.77,
+                        "name": "Child Name 2002",
+                        "value": "Child Value 2002"
+                    },
+                    {
+                        "id": 2003,
+                        "living": true,
+                        "number": 1582.77,
+                        "name": "Child Name 2003",
+                        "value": "Child Value 2003"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 9786,
+            "living": false,
+            "number": 1422.23,
+            "name": "Parent Name 1002",
+            "value": "Parent Value 1002",
+            "childCollection": {
+                "children": [
+                    {
+                        "id": 8474,
+                        "living": false,
+                        "number": 1583.77,
+                        "name": "Child Name 2004",
+                        "value": "Child Value 2004"
+                    },
+                    {
+                        "id": 4874,
+                        "living": true,
+                        "number": 1584.77,
+                        "name": "Child Name 2005",
+                        "value": "Child Value 2005"
+                    },
+                    {
+                        "id": 2736,
+                        "living": false,
+                        "number": 1585.77,
+                        "name": "Child Name 2006",
+                        "value": "Child Value 2006"
+                    }
+                ]
+            }
+        }
+    ]
+}

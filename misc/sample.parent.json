@@ -1,0 +1,31 @@
+{
+	"id": 5678,
+    "living": true,
+    "number": 1421.23,
+    "name": "Demo Parent",
+    "value": "My Parent's Value",
+    "childCollection": {
+    "children": [
+    	{
+        	"id": 8001,
+            "living": true,
+            "number": 1580.77,
+            "name": "My Child's Name",
+            "value": "My Child's Value"
+            },
+            {
+            "id": 8002,
+            "living": false,
+            "number": 1581.77,
+            "name": "Child Name 2002",
+            "value": "Child Value 2002"
+		},
+        {
+        	"id": 8003,
+            "living": true,
+            "number": 1582.77,
+            "name": "Child Name 2003",
+            "value": "Child Value 2003"
+            }
+        ]}
+}

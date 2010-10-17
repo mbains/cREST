@@ -1,0 +1,20 @@
+{
+  "name": "cREST Client",
+  "version": "1.0",
+  
+  "description": "RESTful service testing using xhr made easy!",
+  "icons": {
+    "16": "images/_16.png",
+    "32": "images/_32.png",
+    "48": "images/_48.png",
+    "128": "images/_128.png"
+  },
+
+  "browser_action": {
+    "default_icon": "images/_19.png",
+    "default_title": "cREST Client"
+  },
+
+  "background_page": "background.html",
+  "permissions": ["tabs", "http://*/*", "https://*/*"]
+}

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<title>REST Client</title>
+		<link type="text/css" href="css/start/jquery-ui-1.8.4.custom.css" rel="stylesheet" />
+		<link type="text/css" href="css/rest-client-css.css" rel="stylesheet" />
+
+		<script type="text/javascript" src="js/jquery-1.4.2.min.js"></script>
+		<script type="text/javascript" src="js/jquery-ui-1.8.4.custom.min.js"></script>
+		
+		<script type="text/javascript" src="js/json2.js"></script>
+		
+		<script type="text/javascript" src="js/jquery.chili.js"></script>
+    	<script type="text/javascript" src="js/jquery.chili.recipes.js"></script>
+    	<script type="text/javascript" src="js/jquery.chili.recipes.xml.js"></script>
+    	
+    	<script type="text/javascript" src="js/jquery.autogrow1.2.2.js"></script>
+    	<script type="text/javascript" src="js/jquery-fieldselection.js"></script>
+    	
+		<script type="text/javascript" src="js/crest.js"></script>
+	</head>
+	<body>
+	<div id="requestBuilder" style="padding-bottom: 5px;">
+	<h3 id="requestBuilderHeader"class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
+	   	<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
+			<input type="checkbox" id="modify_headers" /><label class="mybuttontextsize" for="modify_headers">Headers</label>
+	 	</div>
+		<div class="reqBuidlerButtons" id="requestBuilderToolbar"  style="float:right;padding-top:3px;">
+			<input type="radio" value="GET" id="method_get" name="method_radio" checked="checked" />
+			<label for="method_get" class="mybuttontextsize">Get</label>
+			
+			<input type="radio" value="POST" id="method_post" name="method_radio"/>
+			<label for="method_post" class="mybuttontextsize">Post</label>
+			
+			<input type="radio" value="PUT" id="method_put" name="method_radio"/>
+			<label for="method_put" class="mybuttontextsize">Put</label>
+			
+			<input type="radio" value="OPTIONS" id="method_options" name="method_radio"/>
+			<label for="method_options" class="mybuttontextsize">Options</label>
+			
+			<input type="radio" value="HEAD" id="method_head" name="method_radio"/>
+			<label for="method_head" class="mybuttontextsize">Head</label>
+			
+			<input type="radio" value="DELETE" id="method_delete" name="method_radio"/>
+			<label for="method_delete" class="mybuttontextsize">Delete</label>
+
+		</div>
+	  <div id="title" contenteditable="false" class="title1">
+	  	Request Builder
+	  </div>
+	</h3>
+		<div class="ui-widget-content ui-corner-bottom">
+	       	<div style="padding:10px;">
+				<table cellpadding="0" cellspacing="0" border="0px">
+				<tbody>
+					<tr>
+						<td width="100%">
+							<input id="uri_autocomplete" 
+								hint="URI"
+								class="ui-autocomplete-input crest-ui-autocomplete-input" 
+								style="z-index: 100;"/>
+						</td>
+						<td nowrap="true">
+							<div id="submit_request_buttonset">
+								<button id="submit_request" 
+								   class="crest-ui-autocomplete-input-button"
+								   type="submit" value="Submit">Request</button>
+								<button class="crest-ui-autocomplete-input-button" id="edit_uri_history" style="padding:0px;margin:0px;">edit uri history</button>								   
+							</div>
+						</td>
+					</tr>
+				</tbody>
+				</table> 
+			</div>
+			<div id="modify_headers" style="display:none; padding:10px; border-left:0px solid black;border-bottom:0px solid black;">
+				<table cellpadding="0" cellspacing="0" style="padding-bottom:5px;">
+					<tbody>
+						<tr>
+							<td width="100%">
+								<input id="header-autocomplete" 
+									class="ui-autocomplete-input crest-ui-autocomplete-input" 
+									style="z-index: 100;"/>
+							</td>
+							<td nowrap="true">
+								<div id="header-autocomplete_buttonset">
+									<input id="add_header"
+										   class="crest-ui-autocomplete-input-button"
+										   type="submit" value="Add Header"/>
+									<button class="crest-ui-autocomplete-input-button" id="edit_header_history" style="padding:0px;margin:0px;">edit header history</button>
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<textarea class="request_headers" id="request_headers"></textarea>
+				
+			</div>
+			<div id="put_post_entity_div" style="display:none; padding:10px;">
+				<div class="title2">Request Entity</div>
+				<textarea id="put_post_entity" rows="10" style="padding-top:0px;"></textarea>
+			</div>
+		</div>
+	</div>
+	
+	<div id="resp_processing" class="resp_processing" style="display:none; margin:30px;"><h2 style="padding-top:10px;">Processing</h2></div>
+	
+	<div id="main_response_toolbar" style="display:none;">
+		<h3 class="ui-corner-all ui-widget-header" style="height: 29px;">
+			<span class="respButtons"> 
+		   		<button id="only-responses" style="padding:0px;margin:0px;">show/hide response builder</button>
+				<button id="collapse-all" style="padding:0px;margin:0px;">collapse all</button>
+				<button id="expand-all" style="padding:0px;margin:0px;">expand all</button>
+				<button id="trash-all" style="padding:0px;margin:0px;">trash all</button>
+			</span>
+			<div id="title" class="title1">
+				Responses
+			</div>
+		</h3>
+	</div>
+		<div id="responses">&nbsp;</div>
+	<!-- js code clones this div for each successful xhr response 
+		i found wrapping is better when the fload:right (.respButtons) comes before title in html, wasn't very intuitive (to me)
+		
+		<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
+			<input type="checkbox" id="modify_headers" /><label class="mybuttontextsize" for="modify_headers">Headers</label>
+	 	</div>
+	-->
+	<div id="response_cloner" style="padding-left:0px; display:none; padding-bottom: 5px;">
+		<h3 id="responseHeader" state="open" class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
+			<div class="respButtons" id="responseToolbar"> 
+				<button id="more" style="display:none; padding:0px;margin:0px;">more info</button>
+				<button id="lock" style="padding:0px;margin:0px;">lock</button>
+				<button id="replay" style="padding:0px;margin:0px;">request again</button>
+		   		<button id="expand_collapse_response" style="padding:0px;margin:0px;">collapse</button>
+		   	 	<button id="newwinResponse" style="padding:0px;margin:0px;">new window</button>
+		   	 	<button id="trashResponse" style="padding:0px;margin:0px;">trash</button>
+		   	</div>
+		  	<div class="respTitle" id="title" contenteditable="true">
+		  		Initial Title
+		  	</div>
+		</h3>	
+		<div class="ui-widget-content ui-corner-bottom" id="responseDataDiv">
+			<div class="ui-widget-content" style="border-top: 0px; border-left: 0px; border-right: 0px; display: none" id="moreInfoDiv">
+				<div style="padding:10px;">
+	       			<!-- span class="responseDataHeader">Entity</span -->
+					<pre id="reqHeadersPre" contenteditable="true" style="display:none; padding-bottom:10px;"><code id="reqHeadersCode"></code></pre>
+	       			<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
+					<pre id="reqEntityPre" contenteditable="true" style="display:none;"><code id="reqEntityCode"></code></pre><br/>
+				</div>
+			</div>	
+			<div style="padding:10px;">
+	       		<!-- span class="responseDataHeader">Entity</span -->
+				<pre contenteditable="true" style="padding-bottom:10px;"><code id="respHeadersCode"></code></pre>
+	       		<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
+				<pre contenteditable="true"><code id="respEntityCode"></code></pre><br/>
+			</div>
+		</div>
+	</div>
+	<!-- make it a cloner so uri and header history don't clash. JS will need to specify
+	new id -->
+	<div id="edit-div-history-cloner" style="display:none;">
+		<textarea id="history" class="edit_history"></textarea>
+	</div>
+		
+		<!-- 
+		<h2>TODOs/Features</h2>
+		<div>
+			<ol>
+				<li>allow replays to be kept in localStorage for use outside of current session</li>
+				<li>hide responses bar when no responses exist</li>
+				<li>Build links based on wadl</li>
+				<li>Get rid of spell checker</li>
+				<li>Show all request headers. Maybe the chrome ext api has a way to get at them?</li>
+				<li>Create html links when seen in response entity</li>
+				<li>Use modal window instead of alert() for popup messages</li>
+				<li>
+					<b>Configuration</b>
+					<ul>
+						<li>Timout of REST call</li>
+						<li>History - what to keep? all/successful</li>
+						<li>History length</li>
+					</ul>
+				</li>
+				<li>
+					<b>Response Buttons</b>
+					<ul>
+						<li>"On Deck" button that will populate request builder</li>
+						<li>Copy headers/response to clipboard</li>
+						<li>Save headers/response to file or localstorage?</li>
+					</ul>
+				</li>
+			</ol>
+		</div> -->
+	</body>
+</html>
+

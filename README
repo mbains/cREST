@@ -1,0 +1,6 @@
+cREST is RESTful service client chrome extension.
+
+The source for the extension is bundled into a maven JEE
+project and can be found in src/main/webapp/ext. The maven
+project is a Jersey based RESTful service that is used to
+easily test the extension.
