@@ -12,4 +12,5 @@ mvn eclipse:eclipse - this will create your eclipse project so you
 can import it. 
 
 mvn jetty:run - this will run the RESTful test service so you can
-easily test the plugin. 
+easily test the plugin.
+
