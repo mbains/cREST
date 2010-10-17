@@ -1,6 +1,6 @@
 {
   "name": "cREST Client",
-  "version": "1.2",
+  "version": "1.20",
   
   "description": "RESTful service testing using xhr made easy!",
   "icons": {
