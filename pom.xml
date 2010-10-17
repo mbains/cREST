@@ -43,7 +43,7 @@
 						<logTimeZone>GMT</logTimeZone>
 					</requestLog>
 				</configuration>
-			</plugin>
+			</plugin>		
 		</plugins>
 	</build>
 	<dependencies>
@@ -84,7 +84,7 @@
     </dependency>		
 	</dependencies>
 	<properties>
-		<jersey-version>1.3</jersey-version>
+		<jersey-version>1.4</jersey-version>
 	</properties>
 	<repositories>
 		<repository>
