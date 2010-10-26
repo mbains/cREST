@@ -13,3 +13,5 @@ can import it.
 
 mvn jetty:run - this will run the RESTful test service so you can
 easily test the plugin.
+
+...add more stuff...
