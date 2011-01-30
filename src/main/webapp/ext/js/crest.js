@@ -1,3 +1,16 @@
+/**
+ * TODO - i need to break up this code. 
+ * 	1) Create an object representing the front end which has references to frontend jQuery objects. This way 
+ * 	   we don't have to write the same selectors in different places. 
+ *  2) Create a Util.js and get the common junk out of here. 
+ *    
+ * @param method
+ * @param uri
+ * @param reqEntity
+ * @param reqHeaders
+ * @returns {AjaxContext}
+ */
+
 function AjaxContext(method,uri,reqEntity,reqHeaders) {
 	this.xhr = new XMLHttpRequest();
 	this.method = method;
@@ -341,12 +354,14 @@ function handleResponse( ajaxContext ) {
 				function(event) { 
 					var clone = cloneAjaxCtx(ajaxContext);
 					clone.xhr = null;
-					var suitcase = storageObj("suitcase");
-					suitcase.items.push({
-							"name":new Date()+"",
-							"value":clone
+					var reqSuitcase = storageObj("reqSuitcase");
+					reqSuitcase.items.push({
+							"name":method+" "+uri,
+							"ajaxctx":clone
 					});
-					storageObj("suitcase", suitcase);
+					console.log("Pushing reqSuitcase:")
+					console.log(reqSuitcase)
+					storageObj("reqSuitcase", reqSuitcase);
 				});
 	}//done with more info code. 
 	
@@ -383,7 +398,7 @@ function handleResponse( ajaxContext ) {
     		//newResp.find( "code#respEntityCode" ).addClass( chiliClass ).html( fmt ).chili();
         } catch (e) {
     		console.error( "There was an error trying to format your response entity of content type \"" + contentType + 
-    				"\" for response entity \"" + xhr.responseText + "\". Perhaps the server's specified Content-Type doesn't match " +
+    				"\" for response entity \"" + xhr.responseText + "\". Perhaps the server specified a Content-Type doesn't match " +
     				"the response entity? Or, maybe I have a bug!?");
     		entityCode.html( htmlify( $.trim( entity ) ) );
     	}    	
@@ -573,8 +588,8 @@ function init(){
 		storage("headerHistory","[]");
 	}
 	
-	if( storageObj("suitcase") == null ) {
-		storageObj("suitcase", {"items":[]} );
+	if( storageObj("reqSuitcase") == null ) {
+		storageObj("reqSuitcase", {"items":[]} );
 	}
 	
 	//setup uri fields...
@@ -671,7 +686,47 @@ function init(){
 			primary: 'ui-icon-suitcase'
 		}
 	}).click(function() {
-		alert( "Load Request Scenario clicked" );
+		var reqSuitcase = storageObj("reqSuitcase");
+		//todo: code here to select item to load in the front end.
+		var suitcaseItem = reqSuitcase.items[0];
+		var ajaxCtx = suitcaseItem.ajaxctx;
+
+
+		
+		//do put/post entity stuff.
+		if( ajaxCtx.reqEntity && $.inArray( ajaxCtx.method,["PUT", "POST"] ) != -1 ) {
+			$("textarea#put_post_entity").val(ajaxCtx.reqEntity);
+		}
+
+		//do method button stuff
+		var methods = $("input[name=method_radio]");
+		console.log( methods );
+		for(var i = 0; i < methods.length; i++) {
+			if( methods[i].value == ajaxCtx.method) {
+				$(methods[i]).button().trigger("click");
+				$(methods[i]).button().trigger("change");
+				//$(methods[i]).button("refresh");
+				break;
+			}
+		}
+		uriAc.val(ajaxCtx.uri);
+		
+
+		
+		//TODO - test when there's no headers.
+		//do header stuff
+		var headers = "";
+		if( ajaxCtx.reqHeaders.length > 0 ) {
+			for(var i = 0; i < ajaxCtx.reqHeaders.length; i++) {
+				headers = headers+ajaxCtx.reqHeaders[i].name+": "+ajaxCtx.reqHeaders[i].value+"\n";
+			}
+			headersTa.textarea.val(headers);
+			$("#modify_headers").button().trigger("click");
+			$("#modify_headers").button("refresh");
+		}
+				
+
+		//alert( "Load Request Scenario clicked\n\n" + JSON.stringify(suitcaseItem, null, "\t") );
 	});//click
 	
 	
