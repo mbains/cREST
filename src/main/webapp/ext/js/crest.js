@@ -18,12 +18,14 @@ function AjaxContext(method,uri,reqEntity,reqHeaders) {
 function cloneAjaxCtx( ajaxCtx ) {
 	var headersCopy = [];
 
+	//dang, i forgot why i needed to create a copy of this array!
 	for (var i = 0; i < ajaxCtx.reqHeaders.length; i++) {
 		headersCopy.push({ name:ajaxCtx.reqHeaders[i].name,
 			value:ajaxCtx.reqHeaders[i].value});
 	}
+	var newCtx = new AjaxContext( ajaxCtx.method, ajaxCtx.uri, ajaxCtx.reqEntity, headersCopy );
 	
-	return new AjaxContext( ajaxCtx.method, ajaxCtx.uri, ajaxCtx.reqEntity, headersCopy );
+	return newCtx;
 }
 function createAjaxCtxFromUI() {
 	var method = $("input[name=method_radio]:checked").val();
@@ -166,7 +168,7 @@ function handleResponse( ajaxContext ) {
 	if( responsesHeader.css("display") == "none" )
 		responsesHeader.slideToggle("fast");
 
-
+//alert( JSON.stringify(newCtx) );
 	//create new response div and setup buttons & such
 	var newResp = $("div#response_cloner").clone();
 	newResp.attr("id","response");
@@ -334,7 +336,20 @@ function handleResponse( ajaxContext ) {
 			newResp.find( "pre#reqEntityPre" ).css("display", "");
 			newResp.find( "code#reqEntityCode" ).html( ajaxContext.reqEntity );
 		}
-	}
+		 
+		newResp.find('button#save_request_scenario').button().click(
+				function(event) { 
+					var clone = cloneAjaxCtx(ajaxContext);
+					clone.xhr = null;
+					var suitcase = storageObj("suitcase");
+					suitcase.items.push({
+							"name":new Date()+"",
+							"value":clone
+					});
+					storageObj("suitcase", suitcase);
+				});
+	}//done with more info code. 
+	
 	//now let's handle the actual response...
 	newResp.find( "code#respHeadersCode" ).html( formatResponseHeaders( xhr.getAllResponseHeaders() ) );
 	
@@ -465,17 +480,19 @@ function formatXml(xml) {
     return formatted;
 }
 /**
- * awesome bar calls this method on each click. So need to refactor to make sure we 
- * cache the uri history then add a mechanism to update cache.
- * @returns
+ * gets or saves an object from/to storage. 
  */
 function storageObj( name, value ) {
 	if( typeof value === "undefined" )
-		return eval(storage(name));//eval converts json into obj
+		return JSON.parse( storage(name) );
+		//return eval(storage(name));
 	else
 		storage(name,JSON.stringify(value));
 }
 
+/**
+ * gets or saves a string from/to storage. 
+ */
 function storage( name, value ) {
 	if( typeof value === "undefined" )//51oojs
 		return localStorage.getItem( name );
@@ -554,6 +571,10 @@ function init(){
 	}
 	if(! $.isArray(storageObj("headerHistory")) ) {
 		storage("headerHistory","[]");
+	}
+	
+	if( storageObj("suitcase") == null ) {
+		storageObj("suitcase", {"items":[]} );
 	}
 	
 	//setup uri fields...
@@ -644,6 +665,16 @@ function init(){
 		editHistory( "uriHistory", "Edit URI History" );
 	});//click
 	
+	$("button#load_request_scenario").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-suitcase'
+		}
+	}).click(function() {
+		alert( "Load Request Scenario clicked" );
+	});//click
+	
+	
 	
 	//setup header fields...
 	$("div#header-autocomplete_buttonset").buttonset();
@@ -696,14 +727,7 @@ function init(){
 		}
 	}
 	);
-	$('button#edit_header_history').button({
-		text: false,
-		icons: {
-			primary: 'ui-icon-pencil'
-		}
-	}).click(function() {
-		editHistory( "headerHistory", "Edit Header History" );
-	});//click
+
 	$("#add_header").button().click(
 			function(){
 				//see comment for "select" event above for why i'm doing text(val()) call
@@ -713,6 +737,24 @@ function init(){
 				return false;
 			}
 	  );
+	
+	$("button#load_header_scenario").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-suitcase'
+		}
+	}).click(function() {
+		alert( "Load Header Scenario clicked" );
+	});//click
+	
+	$('button#edit_header_history').button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-pencil'
+		}
+	}).click(function() {
+		editHistory( "headerHistory", "Edit Header History" );
+	});//click
 	
 
 	//$(".crest-ui-awesome-bar")

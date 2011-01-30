@@ -66,7 +66,8 @@
 								<button id="submit_request" 
 								   class="crest-ui-autocomplete-input-button"
 								   type="submit" value="Submit">Request</button>
-								<button class="crest-ui-autocomplete-input-button" id="edit_uri_history" style="padding:0px;margin:0px;">edit uri history</button>								   
+								<button class="crest-ui-autocomplete-input-button" id="load_request_scenario">load a saved request scenario</button>
+								<button class="crest-ui-autocomplete-input-button" id="edit_uri_history">edit uri history</button>								   
 							</div>
 						</td>
 					</tr>
@@ -87,7 +88,9 @@
 									<input id="add_header"
 										   class="crest-ui-autocomplete-input-button"
 										   type="submit" value="Add Header"/>
-									<button class="crest-ui-autocomplete-input-button" id="edit_header_history" style="padding:0px;margin:0px;">edit header history</button>
+									<button class="crest-ui-autocomplete-input-button" id="load_header_scenario">load a saved header scenario</button>
+									<button class="crest-ui-autocomplete-input-button" id="edit_header_history">edit header history</button>
+									<!-- <button class="crest-ui-autocomplete-input-button" id="edit_header_history" style="padding:0px;margin:0px;">edit header history</button> -->
 								</div>
 							</td>
 						</tr>
@@ -143,10 +146,11 @@
 		<div class="ui-widget-content ui-corner-bottom" id="responseDataDiv">
 			<div class="ui-widget-content" style="border-top: 0px; border-left: 0px; border-right: 0px; display: none" id="moreInfoDiv">
 				<div style="padding:10px;">
-	       			<!-- span class="responseDataHeader">Entity</span -->
+					<button id="save_request_scenario" style="padding:0px;margin:0px;">Save Request</button>
 					<pre id="reqHeadersPre" contenteditable="true" style="display:none; padding-bottom:10px;"><code id="reqHeadersCode"></code></pre>
 	       			<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
 					<pre id="reqEntityPre" contenteditable="true" style="display:none;"><code id="reqEntityCode"></code></pre><br/>
+
 				</div>
 			</div>	
 			<div style="padding:10px;">
