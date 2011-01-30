@@ -347,7 +347,7 @@ function handleResponse( ajaxContext ) {
 		}
 		if( ajaxContext.hasReqEntity() ) {
 			newResp.find( "pre#reqEntityPre" ).css("display", "");
-			newResp.find( "code#reqEntityCode" ).html( ajaxContext.reqEntity );
+			newResp.find( "code#reqEntityCode" ).html( htmlify( ajaxContext.reqEntity ) );
 		}
 		 
 		newResp.find('button#save_request_scenario').button().click(
