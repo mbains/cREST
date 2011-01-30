@@ -18,6 +18,16 @@
 					<target>1.6</target>
 				</configuration>
 			</plugin>
+      <plugin>
+      	<!-- http://maven.apache.org/plugins/maven-eclipse-plugin/ -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-eclipse-plugin</artifactId>
+        <version>2.8</version>
+        <configuration>
+          <downloadSources>true</downloadSources>
+          <downloadJavadocs>true</downloadJavadocs>
+        </configuration>
+      </plugin>			
 			<plugin>
 				<!-- JETTY 6 PLUGIN -->
 				<groupId>org.mortbay.jetty</groupId>
@@ -84,7 +94,7 @@
     </dependency>		
 	</dependencies>
 	<properties>
-		<jersey-version>1.4</jersey-version>
+		<jersey-version>1.5</jersey-version>
 	</properties>
 	<repositories>
 		<repository>
