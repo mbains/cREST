@@ -359,9 +359,11 @@ function handleResponse( ajaxContext ) {
 							"name":method+" "+uri,
 							"ajaxctx":clone
 					});
-					console.log("Pushing reqSuitcase:")
-					console.log(reqSuitcase)
+					
+					
 					storageObj("reqSuitcase", reqSuitcase);
+					$(this).button("disable");
+					
 				});
 	}//done with more info code. 
 	
@@ -417,11 +419,20 @@ function awesomeBar( items, request, response) {
 	var terms = $.trim( request.term ).split( " " );
 	var filteredItems = 
 		$.map(items, function(item) {
+			if(item.name) {
+				var lab = item.name;
+				var val = "#SC:"+lab;
+			} else {
+				var lab = item;
+				var val = lab
+			}
+				
+			
 			for( var i = 0; i < terms.length; i++ ) {
-				if( item.toLowerCase().indexOf( terms[i].toLowerCase() ) == -1  )
+				if( lab.toLowerCase().indexOf( terms[i].toLowerCase() ) == -1  )
 					return;
 			}
-			return item;//{ label: "Hist: " + item, value: item };
+			return { label: lab, value: val };//str
 			
 		});
 		
@@ -575,8 +586,63 @@ function editHistory( id, title ) {
 	});
 }
 
+function loadSavedRequestInUI( name ) {
+	
+	var reqSuitcase = storageObj("reqSuitcase");
+	//todo: code here to select item to load in the front end.
+	var suitcaseItem = reqSuitcase.items[0];
+	for(var i = 0; i < reqSuitcase.items.length; i++ ) {
+		if( reqSuitcase.items[i].name == name ) {
+			var suitcaseItem = reqSuitcase.items[i]; 
+		}
+	}
+	console.log( "loadSavedRequestInUI item: " + suitcaseItem + " with name: '" +name+ "'" );
+	var ajaxCtx = suitcaseItem.ajaxctx;
+
+
+	
+	//do put/post entity stuff.
+	if( ajaxCtx.reqEntity && $.inArray( ajaxCtx.method,["PUT", "POST"] ) != -1 ) {
+		$("textarea#put_post_entity").val(ajaxCtx.reqEntity);
+	}
+
+	//do method button stuff
+	var methods = $("input[name=method_radio]");
+
+	for(var i = 0; i < methods.length; i++) {
+		if( methods[i].value == ajaxCtx.method) {
+			$(methods[i]).button().trigger("click");
+			$(methods[i]).button().trigger("change");
+			//$(methods[i]).button("refresh");
+			break;
+		}
+	}
+	//alert( "setting uri " + ajaxCtx.uri );
+	uriAc.val(ajaxCtx.uri);
+	
+
+	
+	//TODO - test when there's no headers.
+	//do header stuff
+	var headers = "";
+	if( ajaxCtx.reqHeaders.length > 0 ) {
+		for(var i = 0; i < ajaxCtx.reqHeaders.length; i++) {
+			headers = headers+ajaxCtx.reqHeaders[i].name+": "+ajaxCtx.reqHeaders[i].value+"\n";
+		}
+		headersTa.textarea.val(headers);
+		
+		//only toggle (click) if it's not already open
+		if($("input[id=modify_headers]:checked").length==0) {
+			$("#modify_headers").button().trigger("click");
+			$("#modify_headers").button("refresh");				
+		}
+
+	}
+	return suitcaseItem;
+}
 var uriAc;
 var headersTa;
+var savedReqURIOverride;
 
 function init(){
 	//to make things easier, let's just ensure there's always a uriHistory and
@@ -603,15 +669,49 @@ function init(){
 	 * in the text field on the initial focus only if the user has not
 	 * selected text.
 	 * 
-	 * 09/25 - also adding support for {params}
+	 * 09/25/10 - also adding support for {params}
+	 * 
+	 * 01/31/11 - updated autocomplete to include suitcase items enabling a more complex history. Suitcase itmes
+	 * are just objects that remember everything about a request. We'll use 'em to prepopulate everything in
+	 * the gui. 
+	 * 
 	 * 
 	 * NOTE: see http://api.jquery.com/unbind/ and http://api.jquery.com/bind on using namespaces for events. Calling unbind("mouseup") will
 	 * remove all mouseup events, but if i bound it with a namesapce - like mouseup.focus - i can remove just the one mouseup handler using
 	 * its namespace
 	 */
 	uriAc = $("#uri_autocomplete").autocomplete( {
-			source: function(req, resp){awesomeBar(storageObj("uriHistory"), req, resp);},
-			minLength: 2 }
+			source: function(req, resp){
+					var uris = storageObj("uriHistory");
+					var suitcaseItems = storageObj("reqSuitcase").items;
+					//console.log( suitcaseItems );
+					var names = new Array();
+					for(var i = 0; i < suitcaseItems.length; i++) {
+						names[i] = "req suitcase: " + suitcaseItems[i].name;
+					}
+					awesomeBar(uris.concat(storageObj("reqSuitcase").items), req, resp);
+			},
+			select: function(event, ui){
+				if(ui.item.value) {
+					if( ui.item.value.substring(0,4) == "#SC:" ) {
+						
+						event.stopPropagation(); 
+						var suitcaseItem = loadSavedRequestInUI( ui.item.value.substring(4) );
+						
+						savedReqURIOverride = suitcaseItem.ajaxctx.uri;
+						console.log( "found a suitcase item name in uri stop prop" );
+						//console.log(event);
+						
+					}
+				}
+			},
+			close: function(event, ui) {
+				if( savedReqURIOverride ) {
+					$(this).val(savedReqURIOverride);
+					savedReqURIOverride=null;
+				}
+			},
+			minLength: 2} 
 		).bind( "mouseup.uriparamcheck", function() {
 				
 				var range = $(this).getSelection();
@@ -686,47 +786,7 @@ function init(){
 			primary: 'ui-icon-suitcase'
 		}
 	}).click(function() {
-		var reqSuitcase = storageObj("reqSuitcase");
-		//todo: code here to select item to load in the front end.
-		var suitcaseItem = reqSuitcase.items[0];
-		var ajaxCtx = suitcaseItem.ajaxctx;
-
-
-		
-		//do put/post entity stuff.
-		if( ajaxCtx.reqEntity && $.inArray( ajaxCtx.method,["PUT", "POST"] ) != -1 ) {
-			$("textarea#put_post_entity").val(ajaxCtx.reqEntity);
-		}
-
-		//do method button stuff
-		var methods = $("input[name=method_radio]");
-		console.log( methods );
-		for(var i = 0; i < methods.length; i++) {
-			if( methods[i].value == ajaxCtx.method) {
-				$(methods[i]).button().trigger("click");
-				$(methods[i]).button().trigger("change");
-				//$(methods[i]).button("refresh");
-				break;
-			}
-		}
-		uriAc.val(ajaxCtx.uri);
-		
-
-		
-		//TODO - test when there's no headers.
-		//do header stuff
-		var headers = "";
-		if( ajaxCtx.reqHeaders.length > 0 ) {
-			for(var i = 0; i < ajaxCtx.reqHeaders.length; i++) {
-				headers = headers+ajaxCtx.reqHeaders[i].name+": "+ajaxCtx.reqHeaders[i].value+"\n";
-			}
-			headersTa.textarea.val(headers);
-			$("#modify_headers").button().trigger("click");
-			$("#modify_headers").button("refresh");
-		}
-				
-
-		//alert( "Load Request Scenario clicked\n\n" + JSON.stringify(suitcaseItem, null, "\t") );
+		alert( "Load Request Scenario clicked\n\n" );
 	});//click
 	
 	
