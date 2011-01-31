@@ -8,7 +8,7 @@
 		<init-param>
 			<!-- tells jersey where to look for restful annotations -->
 			<param-name>com.sun.jersey.config.property.packages</param-name>
-			<param-value>com.jonnyi.crest</param-value>
+			<param-value>com.jonnyi.crest,com.jonnyi.wadl</param-value>
 		</init-param>
 		
 		<init-param> 
