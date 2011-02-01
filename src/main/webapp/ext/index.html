@@ -23,6 +23,9 @@
 	<body>
 	<div id="requestBuilder" style="padding-bottom: 5px;">
 	<h3 id="requestBuilderHeader"class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
+ 		<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
+			<input type="checkbox" id="clear_request_builder" /><label class="mybuttontextsize" for="clear_request_builder">Reset</label>
+	 	</div>
 	   	<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
 			<input type="checkbox" id="modify_headers" /><label class="mybuttontextsize" for="modify_headers">Headers</label>
 	 	</div>
@@ -57,6 +60,7 @@
 					<tr>
 						<td width="100%">
 							<input id="uri_autocomplete" 
+								value="http://www.google.com"
 								hint="URI"
 								class="ui-autocomplete-input crest-ui-autocomplete-input" 
 								style="z-index: 100;"/>
@@ -147,6 +151,11 @@
 		<div class="ui-widget-content ui-corner-bottom" id="responseDataDiv">
 			<div class="ui-widget-content" style="border-top: 0px; border-left: 0px; border-right: 0px; display: none" id="moreInfoDiv">
 				<div style="padding:10px;">
+					<div class="selectButtons" id="reqSelectButtons" style="float:right;padding-top:10px">
+		       			Select:
+						<button id="selectReqHeaders">Headers</button>
+						<button id="selectReqEntity">Entity</button>
+					</div>
 					<pre id="reqHeadersPre" contenteditable="true" style="display:none; padding-bottom:10px;"><code id="reqHeadersCode"></code></pre>
 	       			<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
 					<pre id="reqEntityPre" contenteditable="true" style="display:none;"><code id="reqEntityCode"></code></pre><br/>
@@ -155,17 +164,15 @@
 			</div>	
 			<div style="padding:10px;">
 	       		<!-- span class="responseDataHeader">Entity</span -->
-
-	       		<div class="selectButtons" id="selectButtons" style="padding-bottom:5px;">
-	       			Select:
-					<button id="selectRespHeaders">Headers</button>
-					<button id="selectRespEntity">Entity</button>
-				</div>
 				
-				<pre contenteditable="true" style="padding-bottom:10px;" id="respHeadersPre"><code id="respHeadersCode"></code></pre>
+	       		<div class="selectButtons" id="respSelectButtons" style="float:right;padding-top:10px">
+		       			Select:
+						<button id="selectRespHeaders">Headers</button>
+						<button id="selectRespEntity">Entity</button>
+				</div>
+	       		<pre contenteditable="true" style="width:75%;padding-bottom:10px;" id="respHeadersPre"><code id="respHeadersCode"></code></pre>
 	       		<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
-
-				<pre contenteditable="true" id="respEntityPre"><code id="respEntityCode"></code></pre><br/>
+				<pre contenteditable="true" id="respEntityPre" class="position:relative"><code id="respEntityCode"></code></pre><br/>
 			</div>
 		</div>
 	</div>

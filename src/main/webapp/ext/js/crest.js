@@ -464,8 +464,20 @@ function handleResponse( ajaxContext ) {
 				}).css("display", "");
 	}//done with more info code. 
 	
+	//do the select buttons.
+	newResp.find("div#reqSelectButtons").buttonset();
+	newResp.find("button#selectReqHeaders").button().click(
+			function() {
+				newResp.find( "pre#reqHeadersPre" ).selectText();
+			}
+	);
+	newResp.find("button#selectReqEntity").button().click(
+			function() {
+				newResp.find( "pre#reqEntityPre" ).selectText();
+			}
+	);
 	
-	newResp.find("div#selectButtons").buttonset();
+	newResp.find("div#respSelectButtons").buttonset();
 	newResp.find("button#selectRespHeaders").button().click(
 			function() {
 				newResp.find( "pre#respHeadersPre" ).selectText();
@@ -763,7 +775,9 @@ function loadSavedRequestInUI( name ) {
 	return suitcaseItem;
 }
 var uriAc;
+var headerAc;
 var headersTa;
+var putPostEntityTa
 var savedReqURIOverride;
 var requestStore = new RequestStore("reqSuitcase");
 requestStore.init();
@@ -924,11 +938,17 @@ function init(){
 		
 		var nameList = suitcaseDiv.find( "ol#selectable" );
 		for(var i = 0; i < names.length; i++ ) {
-			nameList.append("<li class='ui-widget-content'>"+names[i]+"</li>");
+			var li = $("<li class='ui-widget-content'>"+names[i]+"</li>");
+			console.log("li");
+			nameList.append(li);
+			console.log(li);
+			li.dblclick(function (){
+				suitcaseDialog.parent().find(":button:contains('Load')").trigger("click");
+			});
 		}
 		nameList.selectable();
 		var selected;
-		suitcaseDiv.dialog({
+		var suitcaseDialog = suitcaseDiv.dialog({
 					autoOpen: true,
 					modal: true,
 					width: 600,
@@ -969,7 +989,8 @@ function init(){
 	
 	//setup header fields...
 	$("div#header-autocomplete_buttonset").buttonset();
-	$("#header-autocomplete").autocomplete( {
+	
+	headerAc = $("#header-autocomplete").autocomplete( {
 		source: function(req, resp){ 
 			var alreadySelected = headersTa.textarea.val();
 			var headerHist = storageObj("headerHistory");
@@ -1052,12 +1073,26 @@ function init(){
 
 	//JPI
 	//$("#method_radioset").buttonset();
-	$("#requestBuilderToolbar").buttonset();
+	
+	$("#clear_request_builder").button().click(function() {
+		var getButton = $("input#method_get").button();
+		console.log( getButton );
+		console.log( getButton );
+		getButton.trigger("click").trigger("change").trigger("refresh");
+		uriAc.val("");
+		headerAc.val("");
+		headersTa.textarea.val("");
+		putPostEntityTa.val("");
+		if($(this).is(":checked")) {
+			$(this).attr('checked', false).trigger("change").trigger("refresh");
+		}
+	});
+	
 	$("#modify_headers").button().click(function() {
 		$("div#modify_headers").slideToggle("fast");
 	});
 	
-	
+	$("#requestBuilderToolbar").buttonset();
 	$("input[name=method_radio]").change(function() {
 		var checked = $("input[name=method_radio]:checked").val();
 		putPostDiv = $("#put_post_entity_div");
@@ -1127,6 +1162,7 @@ function init(){
 	});
 	
 	headersTa = $("textarea#request_headers").autogrow();
+	putPostEntityTa = $("textarea#put_post_entity");
 }
 
 function toUniqueArray(a){
@@ -1188,6 +1224,7 @@ jQuery.fn.selectText = function() {
     }
     return this;
 }
+
 //http://stackoverflow.com/questions/2010892/storing-objects-in-html5-localstorage
 //Storage.prototype.setObject = function(key, value) {
 //    this.setItem(key, JSON.stringify(value));
