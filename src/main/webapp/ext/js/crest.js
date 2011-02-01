@@ -15,6 +15,44 @@
  * @returns {AjaxContext}
  */
 
+//function Request(name,ajaxCtx) {
+//	this.name = name;
+//	this.ajaxCtx = cloneAjaxCtx(ajaxCtx);
+//	this.ajaxCtx.xhr = null;
+//}
+//
+//function RequestStore(name) {
+//	this.name = name;
+//	this.refreshRequests();
+//	
+//	this.listRequestNames = function() {
+//		return storageObj(this.name+"Items");
+//	}
+//	
+//	this.locateRequest = function(name) {
+//		for(var i = 0; i < this.store.items.length; i++ ) {
+//			if( this.store.items[i].name == name)
+//				return this.store.items[i];
+//		}		
+//	}
+//	
+//	this.storeRequest = function(request) {
+//		var store = storageObj(this.name);
+//		store.items.push(request);
+//		storageObj(this.name,store)
+//		
+//	}
+//	
+//	this.refreshRequests = function() {
+//		var store = storageObj(this.name);
+//		var storeNames = new Array();
+//		for(var i = 0; i < this.store.items.length; i++ ) {
+//			this.storeNames.push( this.store.items[i].name );
+//		}
+//		storageObj(this.name+"Items",this.storeNames);
+//	}
+//}
+
 function AjaxContext(method,uri,reqEntity,reqHeaders) {
 	this.xhr = new XMLHttpRequest();
 	this.method = method;
@@ -400,7 +438,7 @@ function handleResponse( ajaxContext ) {
 					saveInput.siblings(".ui-dialog-titlebar").hide();
 
 					
-				}).css("display", "");;
+				}).css("display", "");
 	}//done with more info code. 
 	
 	//now let's handle the actual response...
@@ -545,8 +583,11 @@ function formatXml(xml) {
  * gets or saves an object from/to storage. 
  */
 function storageObj( name, value ) {
-	if( typeof value === "undefined" )
+	if( typeof value === "undefined" ) {
+		//console.log( "storageObj("+name+","+value+")" );
 		return JSON.parse( storage(name) );
+	}
+		
 		//return eval(storage(name));
 	else
 		storage(name,JSON.stringify(value));
@@ -630,8 +671,10 @@ function loadSavedRequestInUI( name ) {
 	for(var i = 0; i < reqSuitcase.items.length; i++ ) {
 		if( reqSuitcase.items[i].name == name ) {
 			var suitcaseItem = reqSuitcase.items[i]; 
+			break;
 		}
 	}
+	
 	console.log( "loadSavedRequestInUI item: " + suitcaseItem + " with name: '" +name+ "'" );
 	var ajaxCtx = suitcaseItem.ajaxctx;
 
@@ -647,9 +690,10 @@ function loadSavedRequestInUI( name ) {
 
 	for(var i = 0; i < methods.length; i++) {
 		if( methods[i].value == ajaxCtx.method) {
+			console.log( methods[i].value + " == " + ajaxCtx.method );
 			$(methods[i]).button().trigger("click");
 			$(methods[i]).button().trigger("change");
-			//$(methods[i]).button("refresh");
+			$(methods[i]).button("refresh");
 			break;
 		}
 	}
@@ -668,8 +712,10 @@ function loadSavedRequestInUI( name ) {
 		headersTa.textarea.val(headers);
 		
 		//only toggle (click) if it's not already open
+		console.log($("input[id=modify_headers]:checked"));
 		if($("input[id=modify_headers]:checked").length==0) {
 			$("#modify_headers").button().trigger("click");
+			$("#modify_headers").button().trigger("change");
 			$("#modify_headers").button("refresh");				
 		}
 
@@ -731,12 +777,10 @@ function init(){
 				if(ui.item.value) {
 					if( ui.item.value.substring(0,4) == "#SC:" ) {
 						
-						event.stopPropagation(); 
+						//event.stopPropagation();
 						var suitcaseItem = loadSavedRequestInUI( ui.item.value.substring(4) );
 						
 						savedReqURIOverride = suitcaseItem.ajaxctx.uri;
-						console.log( "found a suitcase item name in uri stop prop" );
-						//console.log(event);
 						
 					}
 				}
@@ -826,7 +870,46 @@ function init(){
 			primary: 'ui-icon-suitcase'
 		}
 	}).click(function() {
-		alert( "Load Request Scenario clicked\n\n" );
+		var suitcaseDiv = $("div#suitcase-dialog-cloner").clone();
+		suitcaseDiv.attr("id","new-suitcase-dialog-cloner");
+		var reqSuitcase = storageObj("reqSuitcase");
+		var nameList = suitcaseDiv.find( "ol#selectable" );
+		for(var i = 0; i < reqSuitcase.items.length; i++ ) {
+			nameList.append("<li class='ui-widget-content'>"+reqSuitcase.items[i].name+"</li>");
+		}
+		nameList.selectable();
+		var selected;
+		suitcaseDiv.dialog({
+					autoOpen: true,
+					modal: true,
+					width: 600,
+					height:400,
+					title: "Saved Requests",
+					buttons: {
+						"Load":function() {
+							selected = $( ".ui-selected", this );
+							suitcaseDiv.dialog("close");
+						},
+						"Edit":function() {
+							alert("edit clicked");
+						},
+						"Cancel":function() {
+							suitcaseDiv.dialog("close");
+						}
+					},
+					close: function(event, ui) {
+						if(selected.length<1) {
+							alert("Please select a saved request.");
+							return;
+						}
+						//had this method called on "Load" click, but all the clicks/events to populate
+						//the ui didn't work properly like they do in URI input for loading suitcase item. 
+						//seems to work find now when we call it after the modal dialog closes.
+						loadSavedRequestInUI(selected.text());
+						//suitcaseDiv.dialog("close");
+
+					}
+		});
 	});//click
 	
 	
