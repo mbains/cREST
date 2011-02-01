@@ -15,43 +15,58 @@
  * @returns {AjaxContext}
  */
 
-//function Request(name,ajaxCtx) {
-//	this.name = name;
-//	this.ajaxCtx = cloneAjaxCtx(ajaxCtx);
-//	this.ajaxCtx.xhr = null;
-//}
-//
-//function RequestStore(name) {
-//	this.name = name;
-//	this.refreshRequests();
-//	
-//	this.listRequestNames = function() {
-//		return storageObj(this.name+"Items");
-//	}
-//	
-//	this.locateRequest = function(name) {
-//		for(var i = 0; i < this.store.items.length; i++ ) {
-//			if( this.store.items[i].name == name)
-//				return this.store.items[i];
-//		}		
-//	}
-//	
-//	this.storeRequest = function(request) {
-//		var store = storageObj(this.name);
-//		store.items.push(request);
-//		storageObj(this.name,store)
-//		
-//	}
-//	
-//	this.refreshRequests = function() {
-//		var store = storageObj(this.name);
-//		var storeNames = new Array();
-//		for(var i = 0; i < this.store.items.length; i++ ) {
-//			this.storeNames.push( this.store.items[i].name );
-//		}
-//		storageObj(this.name+"Items",this.storeNames);
-//	}
-//}
+function Request(name,ajaxCtx) {
+	this.name = name;
+	this.ajaxctx = ajaxCtx;
+	this.ajaxctx.xhr = null;
+}
+
+function RequestStore(name) {
+	this.name = name;
+		
+	this.listRequests = function() {
+		return storageObj(this.name).items;
+	}
+	
+	this.listRequestNames = function() {
+		return storageObj(this.name+"Items");
+	}
+	
+	this.locateRequest = function(name) {
+		var store = storageObj(this.name);
+		for(var i = 0; i < store.items.length; i++ ) {
+			if( store.items[i].name == name)
+				return store.items[i];
+		}		
+	}
+	
+	this.storeRequest = function(request) {
+		var store = storageObj(this.name);
+		store.items.push(request);
+		this.storeRequestNames(store);
+		storageObj(this.name,store)
+		
+	}
+	
+	this.storeRequestNames = function(store) {
+		var storeNames = new Array();
+		for(var i = 0; i < store.items.length; i++ ) {
+			storeNames.push( store.items[i].name );
+		}
+		storageObj(this.name+"Items",storeNames);
+	}
+	
+	this.init = function() {
+		var store = storageObj(this.name); 
+		if( store == null ) {
+			store = {"items":[]};
+			storageObj(this.name, store );
+		}
+
+		this.storeRequestNames(store);
+
+	}
+}
 
 function AjaxContext(method,uri,reqEntity,reqHeaders) {
 	this.xhr = new XMLHttpRequest();
@@ -417,15 +432,23 @@ function handleResponse( ajaxContext ) {
 											   function() {
 													console.log( "save on dialog clicked, disable." );
 													saveButton.button("disable");
-													var clone = cloneAjaxCtx(ajaxContext);
-													clone.xhr = null;
-													var reqSuitcase = storageObj("reqSuitcase");
-													reqSuitcase.items.push({
-															"name":saveInput.find("input#save-request-input-name").val(),
-															"ajaxctx":clone
-													});
 													
-													storageObj("reqSuitcase", reqSuitcase);
+													
+													var req = new Request( 
+															saveInput.find("input#save-request-input-name").val(),
+															ajaxContext);
+													requestStore.storeRequest(req);
+													
+//													var clone = cloneAjaxCtx(ajaxContext);
+//													clone.xhr = null;
+//													var reqSuitcase = storageObj("reqSuitcase");
+//													reqSuitcase.items.push({
+//															"name":saveInput.find("input#save-request-input-name").val(),
+//															"ajaxctx":clone
+//													});
+//													
+//													storageObj("reqSuitcase", reqSuitcase);
+
 													saveInput.dialog("close");
 											   },
 											"Cancel":function() {
@@ -440,6 +463,19 @@ function handleResponse( ajaxContext ) {
 					
 				}).css("display", "");
 	}//done with more info code. 
+	
+	
+	newResp.find("div#selectButtons").buttonset();
+	newResp.find("button#selectRespHeaders").button().click(
+			function() {
+				newResp.find( "pre#respHeadersPre" ).selectText();
+			}
+	);
+	newResp.find("button#selectRespEntity").button().click(
+			function() {
+				newResp.find( "pre#respEntityPre" ).selectText();
+			}
+	);
 	
 	//now let's handle the actual response...
 	newResp.find( "code#respHeadersCode" ).html( formatResponseHeaders( xhr.getAllResponseHeaders() ) );
@@ -493,20 +529,22 @@ function awesomeBar( items, request, response) {
 	var terms = $.trim( request.term ).split( " " );
 	var filteredItems = 
 		$.map(items, function(item) {
-			if(item.name) {
-				var lab = item.name;
-				var val = "#SC:"+lab;
-			} else {
-				var lab = item;
-				var val = lab
-			}
-				
+			if( item.label )
+				var label = item.label;
+			else 
+				var label = item;//must be a string
 			
+//			if(! item.label ) {//item must be a string so make it an object.
+//				item = { label: item, value: item };
+//			}
+			
+		
 			for( var i = 0; i < terms.length; i++ ) {
-				if( lab.toLowerCase().indexOf( terms[i].toLowerCase() ) == -1  )
+				if( label.toLowerCase().indexOf( terms[i].toLowerCase() ) == -1  )
 					return;
 			}
-			return { label: lab, value: val };//str
+			//this could return a string or a { label: "label", value: "val" }
+			return item;
 			
 		});
 		
@@ -664,20 +702,22 @@ function editHistory( id, title ) {
 }
 
 function loadSavedRequestInUI( name ) {
+
+	var suitcaseItem = requestStore.locateRequest(name);
 	
-	var reqSuitcase = storageObj("reqSuitcase");
-	//todo: code here to select item to load in the front end.
-	var suitcaseItem = reqSuitcase.items[0];
-	for(var i = 0; i < reqSuitcase.items.length; i++ ) {
-		if( reqSuitcase.items[i].name == name ) {
-			var suitcaseItem = reqSuitcase.items[i]; 
-			break;
-		}
-	}
+//	var reqSuitcase = storageObj("reqSuitcase");
+//	
+//	for(var i = 0; i < reqSuitcase.items.length; i++ ) {
+//		if( reqSuitcase.items[i].name == name ) {
+//			var suitcaseItem = reqSuitcase.items[i]; 
+//			break;
+//		}
+//	}
+	
+	
 	
 	console.log( "loadSavedRequestInUI item: " + suitcaseItem + " with name: '" +name+ "'" );
 	var ajaxCtx = suitcaseItem.ajaxctx;
-
 
 	
 	//do put/post entity stuff.
@@ -725,6 +765,8 @@ function loadSavedRequestInUI( name ) {
 var uriAc;
 var headersTa;
 var savedReqURIOverride;
+var requestStore = new RequestStore("reqSuitcase");
+requestStore.init();
 
 function init(){
 	//to make things easier, let's just ensure there's always a uriHistory and
@@ -734,10 +776,6 @@ function init(){
 	}
 	if(! $.isArray(storageObj("headerHistory")) ) {
 		storage("headerHistory","[]");
-	}
-	
-	if( storageObj("reqSuitcase") == null ) {
-		storageObj("reqSuitcase", {"items":[]} );
 	}
 	
 	//setup uri fields...
@@ -765,28 +803,36 @@ function init(){
 	uriAc = $("#uri_autocomplete").autocomplete( {
 			source: function(req, resp){
 					var uris = storageObj("uriHistory");
-					var suitcaseItems = storageObj("reqSuitcase").items;
-					//console.log( suitcaseItems );
-					var names = new Array();
-					for(var i = 0; i < suitcaseItems.length; i++) {
-						names[i] = "req suitcase: " + suitcaseItems[i].name;
+//					
+//					var suitcaseItems = storageObj("reqSuitcase").items;
+//					//console.log( suitcaseItems );
+//					var names = new Array();
+//					for(var i = 0; i < suitcaseItems.length; i++) {
+//						names[i] = "req suitcase: " + suitcaseItems[i].name;
+//					}
+					
+//					awesomeBar(uris.concat(storageObj("reqSuitcase").items), req, resp);
+					//TODO - change this to concat listRequestNames, need update to awesome bar too.
+					
+					//{ label: lab, value: val };
+					var names = requestStore.listRequestNames();
+					var nameObjs = [];
+					for(var i = 0; i < names.length; i++) {
+						nameObjs[i] = { label: names[i], value: names[i], crestType:"savedReq" }
 					}
-					awesomeBar(uris.concat(storageObj("reqSuitcase").items), req, resp);
+					
+					awesomeBar(uris.concat(nameObjs), req, resp);
 			},
 			select: function(event, ui){
-				if(ui.item.value) {
-					if( ui.item.value.substring(0,4) == "#SC:" ) {
-						
-						//event.stopPropagation();
-						var suitcaseItem = loadSavedRequestInUI( ui.item.value.substring(4) );
-						
-						savedReqURIOverride = suitcaseItem.ajaxctx.uri;
-						
-					}
+				if(ui.item && ui.item.crestType == "savedReq") {
+					console.log( "new load with crest type" );
+					var suitcaseItem = loadSavedRequestInUI( ui.item.value );
+					savedReqURIOverride = suitcaseItem.ajaxctx.uri;		
 				}
 			},
 			close: function(event, ui) {
 				if( savedReqURIOverride ) {
+					console.log( "URI OVER RIDE" );
 					$(this).val(savedReqURIOverride);
 					savedReqURIOverride=null;
 				}
@@ -872,10 +918,13 @@ function init(){
 	}).click(function() {
 		var suitcaseDiv = $("div#suitcase-dialog-cloner").clone();
 		suitcaseDiv.attr("id","new-suitcase-dialog-cloner");
-		var reqSuitcase = storageObj("reqSuitcase");
+		
+		//var reqSuitcase = storageObj("reqSuitcase");
+		var names = requestStore.listRequestNames();
+		
 		var nameList = suitcaseDiv.find( "ol#selectable" );
-		for(var i = 0; i < reqSuitcase.items.length; i++ ) {
-			nameList.append("<li class='ui-widget-content'>"+reqSuitcase.items[i].name+"</li>");
+		for(var i = 0; i < names.length; i++ ) {
+			nameList.append("<li class='ui-widget-content'>"+names[i]+"</li>");
 		}
 		nameList.selectable();
 		var selected;
@@ -888,6 +937,10 @@ function init(){
 					buttons: {
 						"Load":function() {
 							selected = $( ".ui-selected", this );
+							if(selected.length<1) {
+								alert("Please select a saved request.");
+								return;
+							}
 							suitcaseDiv.dialog("close");
 						},
 						"Edit":function() {
@@ -898,14 +951,14 @@ function init(){
 						}
 					},
 					close: function(event, ui) {
-						if(selected.length<1) {
-							alert("Please select a saved request.");
-							return;
-						}
+						
 						//had this method called on "Load" click, but all the clicks/events to populate
 						//the ui didn't work properly like they do in URI input for loading suitcase item. 
 						//seems to work find now when we call it after the modal dialog closes.
-						loadSavedRequestInUI(selected.text());
+						if(selected && selected.length>0) {
+							loadSavedRequestInUI(selected.text());
+						}
+							
 						//suitcaseDiv.dialog("close");
 
 					}
@@ -1116,6 +1169,25 @@ $(window).load(function() {
 	}
 });
 
+//http://stackoverflow.com/questions/985272/jquery-selecting-text-in-an-element-akin-to-highlighting-with-your-mouse
+jQuery.fn.selectText = function() {
+    var obj = this[0];
+    if ($.browser.msie) {
+        var range = obj.offsetParent.createTextRange();
+        range.moveToElementText(obj);
+        range.select();
+    } else if ($.browser.mozilla || $.browser.opera) {
+        var selection = obj.ownerDocument.defaultView.getSelection();
+        var range = obj.ownerDocument.createRange();
+        range.selectNodeContents(obj);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    } else if ($.browser.safari) {
+        var selection = obj.ownerDocument.defaultView.getSelection();
+        selection.setBaseAndExtent(obj, 0, obj, 1);
+    }
+    return this;
+}
 //http://stackoverflow.com/questions/2010892/storing-objects-in-html5-localstorage
 //Storage.prototype.setObject = function(key, value) {
 //    this.setItem(key, JSON.stringify(value));

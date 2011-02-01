@@ -155,9 +155,17 @@
 			</div>	
 			<div style="padding:10px;">
 	       		<!-- span class="responseDataHeader">Entity</span -->
-				<pre contenteditable="true" style="padding-bottom:10px;"><code id="respHeadersCode"></code></pre>
+
+	       		<div class="selectButtons" id="selectButtons" style="padding-bottom:5px;">
+	       			Select:
+					<button id="selectRespHeaders">Headers</button>
+					<button id="selectRespEntity">Entity</button>
+				</div>
+				
+				<pre contenteditable="true" style="padding-bottom:10px;" id="respHeadersPre"><code id="respHeadersCode"></code></pre>
 	       		<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
-				<pre contenteditable="true"><code id="respEntityCode"></code></pre><br/>
+
+				<pre contenteditable="true" id="respEntityPre"><code id="respEntityCode"></code></pre><br/>
 			</div>
 		</div>
 	</div>
