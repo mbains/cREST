@@ -953,7 +953,7 @@ function init(){
 					modal: true,
 					width: 600,
 					height:400,
-					title: "Saved Requests",
+					title: "Saved Items",
 					buttons: {
 						"Load":function() {
 							selected = $( ".ui-selected", this );
