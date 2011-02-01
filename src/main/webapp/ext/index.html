@@ -133,8 +133,9 @@
 		<h3 id="responseHeader" state="open" class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
 			<div class="respButtons" id="responseToolbar"> 
 				<button id="more" style="display:none; padding:0px;margin:0px;">more info</button>
-				<button id="lock" style="padding:0px;margin:0px;">lock</button>
+				<button id="save_request_scenario" style="display:none; padding:0px;margin:0px;">save request</button>
 				<button id="replay" style="padding:0px;margin:0px;">request again</button>
+				<button id="lock" style="padding:0px;margin:0px;">lock</button>
 		   		<button id="expand_collapse_response" style="padding:0px;margin:0px;">collapse</button>
 		   	 	<button id="newwinResponse" style="padding:0px;margin:0px;">new window</button>
 		   	 	<button id="trashResponse" style="padding:0px;margin:0px;">trash</button>
@@ -146,7 +147,6 @@
 		<div class="ui-widget-content ui-corner-bottom" id="responseDataDiv">
 			<div class="ui-widget-content" style="border-top: 0px; border-left: 0px; border-right: 0px; display: none" id="moreInfoDiv">
 				<div style="padding:10px;">
-					<button id="save_request_scenario" style="padding:0px;margin:0px;">Save Request</button>
 					<pre id="reqHeadersPre" contenteditable="true" style="display:none; padding-bottom:10px;"><code id="reqHeadersCode"></code></pre>
 	       			<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
 					<pre id="reqEntityPre" contenteditable="true" style="display:none;"><code id="reqEntityCode"></code></pre><br/>
@@ -166,7 +166,9 @@
 	<div id="edit-div-history-cloner" style="display:none;">
 		<textarea id="history" class="edit_history"></textarea>
 	</div>
-		
+	<div id="save-request-input-cloner" style="display:none;">
+		Name: <input id="save-request-input-name" style="width: 90%;z-index: 100;"/>
+	</div>
 		<!-- 
 		<h2>TODOs/Features</h2>
 		<div>

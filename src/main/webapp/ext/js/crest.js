@@ -1,4 +1,8 @@
 /**
+ * New Features Jan 2011:
+ * - can click enter now to submit a request.
+ * - much better history now with saving of entire requests.
+ * 
  * TODO - i need to break up this code. 
  * 	1) Create an object representing the front end which has references to frontend jQuery objects. This way 
  * 	   we don't have to write the same selectors in different places. 
@@ -350,21 +354,53 @@ function handleResponse( ajaxContext ) {
 			newResp.find( "code#reqEntityCode" ).html( htmlify( ajaxContext.reqEntity ) );
 		}
 		 
-		newResp.find('button#save_request_scenario').button().click(
-				function(event) { 
-					var clone = cloneAjaxCtx(ajaxContext);
-					clone.xhr = null;
-					var reqSuitcase = storageObj("reqSuitcase");
-					reqSuitcase.items.push({
-							"name":method+" "+uri,
-							"ajaxctx":clone
-					});
+		newResp.find('button#save_request_scenario').button({
+				text: false,
+				icons: {
+					primary: 'ui-icon-disk'
+				}
+				}).click(
+				function(event) {
+					var saveInput = $("div#save-request-input-cloner").clone();
+					saveInput.attr("id","new-save-request-input-cloner");//ensures we only do things with the clone
+					var saveButton = $(this);
+
+
+					//saveInput.find("input#save-request-input-name").val(method+" "+uri);
+					saveInput.find("input#save-request-input-name").val("Name me");
+					$(saveInput).dialog(
+							{
+								autoOpen: true,
+								/*modal: true,*/
+								width: 600,
+								height:130,
+								/*title: "Name this request",*/
+								buttons: { "Save" :
+											   function() {
+													console.log( "save on dialog clicked, disable." );
+													saveButton.button("disable");
+													var clone = cloneAjaxCtx(ajaxContext);
+													clone.xhr = null;
+													var reqSuitcase = storageObj("reqSuitcase");
+													reqSuitcase.items.push({
+															"name":saveInput.find("input#save-request-input-name").val(),
+															"ajaxctx":clone
+													});
+													
+													storageObj("reqSuitcase", reqSuitcase);
+													saveInput.dialog("close");
+											   },
+											"Cancel":function() {
+												saveInput.dialog("close");
+											}
+										 }
+							}					
+					);
+									
+					saveInput.siblings(".ui-dialog-titlebar").hide();
+
 					
-					
-					storageObj("reqSuitcase", reqSuitcase);
-					$(this).button("disable");
-					
-				});
+				}).css("display", "");;
 	}//done with more info code. 
 	
 	//now let's handle the actual response...
@@ -560,7 +596,7 @@ function editHistory( id, title ) {
 		width: 700,
 		height: 500,
 		title: title,
-		buttons: { "Save and close" :
+		buttons: { "Save" :
 					   //todo, refactor so header history can reuse some of this code
 					   //do some clean up like ensuring that a real URI is entered and
 					   //that no duplicates are stored
@@ -581,7 +617,7 @@ function editHistory( id, title ) {
 							storageObj(id, newHistory.sort());
 							histDialog.dialog("close");
 					   },
-					"Close":function() {histDialog.dialog("close");}
+					"Cancel":function() {histDialog.dialog("close");}
 				 }
 	});
 }
@@ -756,6 +792,10 @@ function init(){
 				$(this).unbind( "mouseup.focus" );
 			});
 			
+		}).keypress(function(e) {
+		    if(e.keyCode == 13) {
+		    	handleRequest(createAjaxCtxFromUI());
+		    }
 		});
 	
 	

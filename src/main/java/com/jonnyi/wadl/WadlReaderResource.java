@@ -89,7 +89,13 @@ public class WadlReaderResource {
 			System.out.println(this.qsBase);
 			wp.setIncludeBase(this.qsBase);
 			RestfulService service = wp.flatten();
-			resp = Response.ok( service ).build();
+			if(this.qsQuickSummary) {
+				List<ResourceOperation> rops = this.formatForQuickSummary(service);
+				GenericEntity<List<ResourceOperation>> ge = new GenericEntity<List<ResourceOperation>>(rops){};
+				resp = Response.ok( ge ).build();	
+			} else {
+				resp = Response.ok( service ).build();	
+			}
 		} catch( Exception e ) {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			PrintStream ps = new PrintStream( out );
