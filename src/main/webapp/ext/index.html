@@ -24,7 +24,7 @@
 	<div id="requestBuilder" style="padding-bottom: 5px;">
 	<h3 id="requestBuilderHeader"class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
  		<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
-			<input type="checkbox" id="clear_request_builder" /><label class="mybuttontextsize" for="clear_request_builder">Reset</label>
+			<input type="checkbox" id="reset_request_builder" /><label class="mybuttontextsize" for="reset_request_builder">Reset</label>
 	 	</div>
 	   	<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
 			<input type="checkbox" id="modify_headers" /><label class="mybuttontextsize" for="modify_headers">Headers</label>
@@ -192,6 +192,18 @@
 	</style>
 	<div id="suitcase-dialog-cloner" style="display:none;">
 		<ol id="selectable"/>
+	</div>
+	<div id="saved-req-item-edit-cloner" style="display:none;">
+		<br/>Name:<br/>
+		<input id="saved-req-item-name" style="width:99%"/>
+		<br/>Method:<br/>
+		<input id="saved-req-item-method" style="width:99%"/>
+		<br/>URI:<br/>
+		<input id="saved-req-item-uri" style="width:99%"/>
+		<br/>Headers:<br/>
+		<textarea id="saved-req-item-headers" style="width:99%" rows="10"></textarea>
+		<br/>Entity:<br/>
+		<textarea id="saved-req-item-entity" style="width:99%" rows="10"></textarea>
 	</div>
 </div><!-- End demo -->
 		<!-- 

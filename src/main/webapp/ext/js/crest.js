@@ -430,7 +430,7 @@ function handleResponse( ajaxContext ) {
 								/*title: "Name this request",*/
 								buttons: { "Save" :
 											   function() {
-													console.log( "save on dialog clicked, disable." );
+													//console.log( "save on dialog clicked, disable." );
 													saveButton.button("disable");
 													
 													
@@ -728,7 +728,7 @@ function loadSavedRequestInUI( name ) {
 	
 	
 	
-	console.log( "loadSavedRequestInUI item: " + suitcaseItem + " with name: '" +name+ "'" );
+	//console.log( "loadSavedRequestInUI item: " + suitcaseItem + " with name: '" +name+ "'" );
 	var ajaxCtx = suitcaseItem.ajaxctx;
 
 	
@@ -742,7 +742,7 @@ function loadSavedRequestInUI( name ) {
 
 	for(var i = 0; i < methods.length; i++) {
 		if( methods[i].value == ajaxCtx.method) {
-			console.log( methods[i].value + " == " + ajaxCtx.method );
+			//console.log( methods[i].value + " == " + ajaxCtx.method );
 			$(methods[i]).button().trigger("click");
 			$(methods[i]).button().trigger("change");
 			$(methods[i]).button("refresh");
@@ -757,14 +757,14 @@ function loadSavedRequestInUI( name ) {
 	//TODO - test when there's no headers.
 	//do header stuff
 	var headers = "";
-	if( ajaxCtx.reqHeaders.length > 0 ) {
+	if( ajaxCtx.reqHeaders && ajaxCtx.reqHeaders.length > 0 ) {
 		for(var i = 0; i < ajaxCtx.reqHeaders.length; i++) {
 			headers = headers+ajaxCtx.reqHeaders[i].name+": "+ajaxCtx.reqHeaders[i].value+"\n";
 		}
 		headersTa.textarea.val(headers);
 		
 		//only toggle (click) if it's not already open
-		console.log($("input[id=modify_headers]:checked"));
+		//console.log($("input[id=modify_headers]:checked"));
 		if($("input[id=modify_headers]:checked").length==0) {
 			$("#modify_headers").button().trigger("click");
 			$("#modify_headers").button().trigger("change");
@@ -839,14 +839,12 @@ function init(){
 			},
 			select: function(event, ui){
 				if(ui.item && ui.item.crestType == "savedReq") {
-					console.log( "new load with crest type" );
 					var suitcaseItem = loadSavedRequestInUI( ui.item.value );
 					savedReqURIOverride = suitcaseItem.ajaxctx.uri;		
 				}
 			},
 			close: function(event, ui) {
 				if( savedReqURIOverride ) {
-					console.log( "URI OVER RIDE" );
 					$(this).val(savedReqURIOverride);
 					savedReqURIOverride=null;
 				}
@@ -939,15 +937,14 @@ function init(){
 		var nameList = suitcaseDiv.find( "ol#selectable" );
 		for(var i = 0; i < names.length; i++ ) {
 			var li = $("<li class='ui-widget-content'>"+names[i]+"</li>");
-			console.log("li");
+			li.attr( "id",names[i] );
 			nameList.append(li);
-			console.log(li);
 			li.dblclick(function (){
 				suitcaseDialog.parent().find(":button:contains('Load')").trigger("click");
 			});
 		}
 		nameList.selectable();
-		var selected;
+		var loadSelected;
 		var suitcaseDialog = suitcaseDiv.dialog({
 					autoOpen: true,
 					modal: true,
@@ -956,15 +953,49 @@ function init(){
 					title: "Saved Items",
 					buttons: {
 						"Load":function() {
-							selected = $( ".ui-selected", this );
-							if(selected.length<1) {
+							loadSelected = $( ".ui-selected", this );
+							if(loadSelected.length<1) {
 								alert("Please select a saved request.");
 								return;
 							}
 							suitcaseDiv.dialog("close");
 						},
 						"Edit":function() {
-							alert("edit clicked");
+							var editSelected = $( ".ui-selected", this );
+							if(editSelected.length<1) {
+								alert("Please select a saved request.");
+								return;
+							}
+							
+							var reqItem = requestStore.locateRequest(editSelected.text());
+							var editReq = $("div#saved-req-item-edit-cloner").clone().attr( "id", "new-saved-req-item-edit-cloner" );
+							console.log( editReq );
+							editReq.find("input#saved-req-item-name").val(reqItem.name);
+							editReq.find("input#saved-req-item-method").val(reqItem.ajaxctx.method);
+							editReq.find("input#saved-req-item-uri").val(reqItem.ajaxctx.uri);
+							var headers = "";
+							if( reqItem.ajaxctx.reqHeaders && reqItem.ajaxctx.reqHeaders.length > 0 ) {
+								for(var i = 0; i < reqItem.ajaxctx.reqHeaders.length; i++) {
+									headers = headers+reqItem.ajaxctx.reqHeaders[i].name+": "+reqItem.ajaxctx.reqHeaders[i].value+"\n";
+								}
+							}
+							editReq.find("textarea#saved-req-item-headers").text(headers);
+							editReq.find("textarea#saved-req-item-entity").text(reqItem.ajaxctx.reqEntity);
+							editReq.css( "display","block" );
+							
+
+							//let's re-purpose the dialog for edit
+							//editSelected.append(editReq);
+							$(this).html( editReq );
+							$(this).dialog( "option", "buttons", { 
+								"Save": function() { 
+									alert("okay"); 
+								},
+								 "Cancel": function() {
+									 $(this).dialog("close");
+								 }
+							});
+							
 						},
 						"Cancel":function() {
 							suitcaseDiv.dialog("close");
@@ -973,10 +1004,10 @@ function init(){
 					close: function(event, ui) {
 						
 						//had this method called on "Load" click, but all the clicks/events to populate
-						//the ui didn't work properly like they do in URI input for loading suitcase item. 
+						//the ui in loadSavedRequestInUI didn't work properly like they do in URI input for loading suitcase item. 
 						//seems to work find now when we call it after the modal dialog closes.
-						if(selected && selected.length>0) {
-							loadSavedRequestInUI(selected.text());
+						if(loadSelected && loadSelected.length>0) {
+							loadSavedRequestInUI(loadSelected.attr("id"));
 						}
 							
 						//suitcaseDiv.dialog("close");
@@ -1074,21 +1105,24 @@ function init(){
 	//JPI
 	//$("#method_radioset").buttonset();
 	
-	$("#clear_request_builder").button().click(function() {
+	$("#reset_request_builder").button().click(function() {
 		var getButton = $("input#method_get").button();
-		console.log( getButton );
-		console.log( getButton );
 		getButton.trigger("click").trigger("change").trigger("refresh");
 		uriAc.val("");
 		headerAc.val("");
 		headersTa.textarea.val("");
+	
+		if( $("div#modify_headers").css("display") != "none")
+			$("input#modify_headers").trigger("click").trigger("change").trigger("refresh");
+			
 		putPostEntityTa.val("");
+		
 		if($(this).is(":checked")) {
 			$(this).attr('checked', false).trigger("change").trigger("refresh");
 		}
 	});
 	
-	$("#modify_headers").button().click(function() {
+	$("input#modify_headers").button().click(function() {
 		$("div#modify_headers").slideToggle("fast");
 	});
 	
