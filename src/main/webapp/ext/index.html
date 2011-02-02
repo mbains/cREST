@@ -21,6 +21,7 @@
 		<script type="text/javascript" src="js/crest.js"></script>
 	</head>
 	<body>
+<div id="body">
 	<div id="requestBuilder" style="padding-bottom: 5px;">
 	<h3 id="requestBuilderHeader"class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
  		<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
@@ -51,7 +52,7 @@
 		</div>
 	  <div id="title" contenteditable="false" class="title1">
 	  	Request Builder
-	  </div>
+	  </div>  
 	</h3>
 		<div class="ui-widget-content ui-corner-bottom">
 	       	<div style="padding:10px;">
@@ -78,6 +79,38 @@
 				</tbody>
 				</table> 
 			</div>
+				<style>
+		#selectable .ui-selecting { background: #FECA40; }
+		#selectable .ui-selected { background: #ACDD4A; color: black; }
+		#selectable { list-style-type: none; margin: 0; padding: 0; width: 100%; }
+		#selectable li { margin: 3px; padding: 0.4em; font-size: 1em; /*height: 18px;*/ }
+	</style>
+	<div id="suitcase-dialog-tabs" style="display:none;">
+		<ul>
+			<li><a href="#saved-requests">Saved Requests</a></li>
+			<li><a href="#uri-history">URI History</a></li>
+			<li><a href="#edit-request">Edit Request</a></li>
+			<button id="suitcase-dialog-tabs-close" style="float:right;">Close</button>
+		</ul>
+		<div id="saved-requests">
+			<div id="saved-requests-load-options">
+				Load:
+				<input type="checkbox" checked="true" value="uri" id="load_uri"/>
+				<label for="load_uri">URI</label>
+				<input type="checkbox" checked="true" value="headers" id="load_headers"/>
+				<label for="load_headers">Headers</label>
+				<input type="checkbox" checked="true" value="entity" id="load_entity"/>
+				<label for="load_entity">Entity</label><br/><br/>
+			</div>			
+			<ol id="selectable"></ol>
+		</div>
+		<div id="uri-history">
+			URI History
+		</div>
+		<div id="edit-request">
+			Edit Request
+		</div>
+	</div>	
 			<div id="modify_headers" style="display:none; padding:10px; border-left:0px solid black;border-bottom:0px solid black;">
 				<table cellpadding="0" cellspacing="0" style="padding-bottom:5px;">
 					<tbody>
@@ -111,7 +144,19 @@
 	</div>
 	
 	<div id="resp_processing" class="resp_processing" style="display:none; margin:30px;"><h2 style="padding-top:10px;">Processing</h2></div>
-	
+
+	<div id="saved-req-item-edit-cloner" style="display:none;">
+		<br/>Name:<br/>
+		<input id="saved-req-item-name" style="width:99%"/>
+		<br/>Method:<br/>
+		<input id="saved-req-item-method" style="width:99%"/>
+		<br/>URI:<br/>
+		<input id="saved-req-item-uri" style="width:99%"/>
+		<br/>Headers:<br/>
+		<textarea id="saved-req-item-headers" style="width:99%" rows="10"></textarea>
+		<br/>Entity:<br/>
+		<textarea id="saved-req-item-entity" style="width:99%" rows="10"></textarea>
+	</div>	
 	<div id="main_response_toolbar" style="display:none;">
 		<h3 class="ui-corner-all ui-widget-header" style="height: 29px;">
 			<span class="respButtons"> 
@@ -184,27 +229,7 @@
 	<div id="save-request-input-cloner" style="display:none;">
 		Name: <input id="save-request-input-name" style="width: 90%;z-index: 100;"/>
 	</div>
-	<style>
-		#selectable .ui-selecting { background: #FECA40; }
-		#selectable .ui-selected { background: #F39814; color: white; }
-		#selectable { list-style-type: none; margin: 0; padding: 0; width: 100%; }
-		#selectable li { margin: 3px; padding: 0.4em; font-size: 1em; /*height: 18px;*/ }
-	</style>
-	<div id="suitcase-dialog-cloner" style="display:none;">
-		<ol id="selectable"/>
-	</div>
-	<div id="saved-req-item-edit-cloner" style="display:none;">
-		<br/>Name:<br/>
-		<input id="saved-req-item-name" style="width:99%"/>
-		<br/>Method:<br/>
-		<input id="saved-req-item-method" style="width:99%"/>
-		<br/>URI:<br/>
-		<input id="saved-req-item-uri" style="width:99%"/>
-		<br/>Headers:<br/>
-		<textarea id="saved-req-item-headers" style="width:99%" rows="10"></textarea>
-		<br/>Entity:<br/>
-		<textarea id="saved-req-item-entity" style="width:99%" rows="10"></textarea>
-	</div>
+
 </div><!-- End demo -->
 		<!-- 
 		<h2>TODOs/Features</h2>

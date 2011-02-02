@@ -18,6 +18,7 @@
 function Request(name,ajaxCtx) {
 	this.name = name;
 	this.ajaxctx = ajaxCtx;
+	this.date;
 	this.ajaxctx.xhr = null;
 }
 
@@ -42,6 +43,7 @@ function RequestStore(name) {
 	
 	this.storeRequest = function(request) {
 		var store = storageObj(this.name);
+		request.date = new Date();
 		store.items.push(request);
 		this.storeRequestNames(store);
 		storageObj(this.name,store)
@@ -546,10 +548,6 @@ function awesomeBar( items, request, response) {
 			else 
 				var label = item;//must be a string
 			
-//			if(! item.label ) {//item must be a string so make it an object.
-//				item = { label: item, value: item };
-//			}
-			
 		
 			for( var i = 0; i < terms.length; i++ ) {
 				if( label.toLowerCase().indexOf( terms[i].toLowerCase() ) == -1  )
@@ -713,29 +711,27 @@ function editHistory( id, title ) {
 	});
 }
 
-function loadSavedRequestInUI( name ) {
+function loadSavedRequestInUI( name, loadOpts ) {
 
+	if(!loadOpts) {//default to load everything
+		var loadOpts = {
+				uri:true,
+				headers:true,
+				entity:true
+		}
+		console.log( "default opts" );
+	}
 	var suitcaseItem = requestStore.locateRequest(name);
-	
-//	var reqSuitcase = storageObj("reqSuitcase");
-//	
-//	for(var i = 0; i < reqSuitcase.items.length; i++ ) {
-//		if( reqSuitcase.items[i].name == name ) {
-//			var suitcaseItem = reqSuitcase.items[i]; 
-//			break;
-//		}
-//	}
-	
-	
-	
-	//console.log( "loadSavedRequestInUI item: " + suitcaseItem + " with name: '" +name+ "'" );
 	var ajaxCtx = suitcaseItem.ajaxctx;
-
 	
 	//do put/post entity stuff.
-	if( ajaxCtx.reqEntity && $.inArray( ajaxCtx.method,["PUT", "POST"] ) != -1 ) {
-		$("textarea#put_post_entity").val(ajaxCtx.reqEntity);
-	}
+	if( loadOpts.entity ) {
+		if( loadOpts.entity && ajaxCtx.reqEntity && $.inArray( ajaxCtx.method,["PUT", "POST"] ) != -1 ) {
+			$("textarea#put_post_entity").val(ajaxCtx.reqEntity);
+		} else {
+			$("textarea#put_post_entity").val("");//just clear it out.
+		}
+	} //else we just leave entity stuff as it was.
 
 	//do method button stuff
 	var methods = $("input[name=method_radio]");
@@ -750,27 +746,28 @@ function loadSavedRequestInUI( name ) {
 		}
 	}
 	//alert( "setting uri " + ajaxCtx.uri );
-	uriAc.val(ajaxCtx.uri);
+	if( loadOpts.uri )
+		uriAc.val(ajaxCtx.uri);
 	
 
 	
-	//TODO - test when there's no headers.
 	//do header stuff
-	var headers = "";
-	if( ajaxCtx.reqHeaders && ajaxCtx.reqHeaders.length > 0 ) {
-		for(var i = 0; i < ajaxCtx.reqHeaders.length; i++) {
-			headers = headers+ajaxCtx.reqHeaders[i].name+": "+ajaxCtx.reqHeaders[i].value+"\n";
-		}
-		headersTa.textarea.val(headers);
-		
-		//only toggle (click) if it's not already open
-		//console.log($("input[id=modify_headers]:checked"));
-		if($("input[id=modify_headers]:checked").length==0) {
-			$("#modify_headers").button().trigger("click");
-			$("#modify_headers").button().trigger("change");
-			$("#modify_headers").button("refresh");				
-		}
-
+	if( loadOpts.headers ) {
+		var headers = "";
+		if( ajaxCtx.reqHeaders && ajaxCtx.reqHeaders.length > 0 ) {
+			for(var i = 0; i < ajaxCtx.reqHeaders.length; i++) {
+				headers = headers+ajaxCtx.reqHeaders[i].name+": "+ajaxCtx.reqHeaders[i].value+"\n";
+			}
+			headersTa.textarea.val(headers);
+			
+			//only toggle (click) if it's not already open
+			//console.log($("input[id=modify_headers]:checked"));
+			if($("input[id=modify_headers]:checked").length==0) {
+				$("#modify_headers").button().trigger("click");
+				$("#modify_headers").button().trigger("change");
+				$("#modify_headers").button("refresh");				
+			}
+		} else headersTa.textarea.val("");//TODO - test this out.		
 	}
 	return suitcaseItem;
 }
@@ -928,22 +925,79 @@ function init(){
 			primary: 'ui-icon-suitcase'
 		}
 	}).click(function() {
+		/**
+		 * TODO
+		 * 1) hide headers/req entity fields on click
+		 * 2) don't allow suitcase to be open while user submits requests. This
+		 *    ensures suitcase is always up to date
+		 * 3) user cancels suitcase w/out selecting, ensure to unhide any of those
+		 *    hidden in #1 above. 
+		 */
+		
+		var disableDiv = $("<div id='screen-dis' style='position:absolute; opacity:0.3; z-index:1000; top:0; left:0; width:100%; height:100%; background-color:#000000;'/>") 
+		disableDiv.height($(document).height());
+		$("body").append(disableDiv);
+		
+		var tabs = $("#suitcase-dialog-tabs").css("z-index","1001");
+		//handle saved requests tab...
+		var savedReqs = tabs.find("#saved-requests");
+		//savedReqs.find("button#load").button();
+		var names = requestStore.listRequestNames();
+		
+		var nameList = savedReqs.find( "ol#selectable" );
+		nameList.empty();//remove everything then build the list back up...
+		for(var i = 0; i < names.length; i++ ) {
+			var li = $("<li class='ui-widget-content' title='double click me'>"+names[i]+"</li>");
+			//var li = $("<li class='ui-state-default'>"+names[i]+"</li>");
+			li.attr( "id",names[i] ).click(function (){
+				console.log( "click '" +  $(this).attr("id") + "'" );
+				$(this).siblings().removeClass("ui-selected");
+				$(this).addClass("ui-selected");
+			}).dblclick(function (){
+
+				var loadOpts = {
+						uri:$("input[id=load_uri]:checked").length>0,
+						headers:$("input[id=load_headers]:checked").length>0,
+						entity:$("input[id=load_entity]:checked").length>0
+				}
+				console.log( loadOpts );
+				closeTabs();
+				loadSavedRequestInUI($(this).attr("id"),loadOpts);
+			});
+			nameList.append(li);
+		}
+		
+		//tabs.find("div#saved-requests-load-options").buttonset();
+		
+		tabs.find("button#suitcase-dialog-tabs-close").button({
+			text: false,
+			icons: {
+				primary: 'ui-icon-close'
+			}
+		}).click(function() { closeTabs() });
+		
+		tabs.tabs().css( "display", "block" );
+		
+		var closeTabs = function() {
+			console.log( "close tabs down" );
+			tabs.css( "display", "none" );
+			disableDiv.remove();
+		}
+		
+		//***
+		return;
+		
+		
 		var suitcaseDiv = $("div#suitcase-dialog-cloner").clone();
 		suitcaseDiv.attr("id","new-suitcase-dialog-cloner");
 		
 		//var reqSuitcase = storageObj("reqSuitcase");
-		var names = requestStore.listRequestNames();
 		
-		var nameList = suitcaseDiv.find( "ol#selectable" );
-		for(var i = 0; i < names.length; i++ ) {
-			var li = $("<li class='ui-widget-content'>"+names[i]+"</li>");
-			li.attr( "id",names[i] );
-			nameList.append(li);
-			li.dblclick(function (){
-				suitcaseDialog.parent().find(":button:contains('Load')").trigger("click");
-			});
-		}
-		nameList.selectable();
+		
+		
+
+		
+		suitcaseDiv.find("#suitcase-dialog-tabs").tabs();
 		var loadSelected;
 		var suitcaseDialog = suitcaseDiv.dialog({
 					autoOpen: true,
@@ -966,10 +1020,12 @@ function init(){
 								alert("Please select a saved request.");
 								return;
 							}
+							//close able tabs
+							//http://andrew.io/weblog/2010/01/a-close-button-for-jquery-ui-tabs/
 							
 							var reqItem = requestStore.locateRequest(editSelected.text());
 							var editReq = $("div#saved-req-item-edit-cloner").clone().attr( "id", "new-saved-req-item-edit-cloner" );
-							console.log( editReq );
+							console.log( reqItem.date );
 							editReq.find("input#saved-req-item-name").val(reqItem.name);
 							editReq.find("input#saved-req-item-method").val(reqItem.ajaxctx.method);
 							editReq.find("input#saved-req-item-uri").val(reqItem.ajaxctx.uri);
@@ -1015,7 +1071,6 @@ function init(){
 					}
 		});
 	});//click
-	
 	
 	
 	//setup header fields...
