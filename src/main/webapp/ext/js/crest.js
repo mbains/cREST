@@ -24,15 +24,15 @@ function Request(name,ajaxCtx) {
 
 function RequestStore(name) {
 	this.name = name;
-		
+
 	this.listRequests = function() {
 		return storageObj(this.name).items;
 	}
-	
+
 	this.listRequestNames = function() {
 		return storageObj(this.name+"Items");
 	}
-	
+
 	this.locateRequest = function(name) {
 		var store = storageObj(this.name);
 		for(var i = 0; i < store.items.length; i++ ) {
@@ -40,16 +40,16 @@ function RequestStore(name) {
 				return store.items[i];
 		}		
 	}
-	
+
 	this.storeRequest = function(request) {
 		var store = storageObj(this.name);
 		request.date = new Date();
 		store.items.push(request);
 		this.storeRequestNames(store);
 		storageObj(this.name,store)
-		
+
 	}
-	
+
 	this.storeRequestNames = function(store) {
 		var storeNames = new Array();
 		for(var i = 0; i < store.items.length; i++ ) {
@@ -57,7 +57,7 @@ function RequestStore(name) {
 		}
 		storageObj(this.name+"Items",storeNames);
 	}
-	
+
 	this.init = function() {
 		var store = storageObj(this.name); 
 		if( store == null ) {
@@ -78,7 +78,7 @@ function AjaxContext(method,uri,reqEntity,reqHeaders) {
 	this.reqHeaders = reqHeaders;
 	this.respHeaders = null;
 	this.respEntity = null;
-	
+
 	this.hasReqHeaders = function() {
 		return $.isArray( this.reqHeaders ) && this.reqHeaders.length > 0;
 	};
@@ -96,7 +96,7 @@ function cloneAjaxCtx( ajaxCtx ) {
 			value:ajaxCtx.reqHeaders[i].value});
 	}
 	var newCtx = new AjaxContext( ajaxCtx.method, ajaxCtx.uri, ajaxCtx.reqEntity, headersCopy );
-	
+
 	return newCtx;
 }
 function createAjaxCtxFromUI() {
@@ -104,9 +104,9 @@ function createAjaxCtxFromUI() {
 	var uri = uriAc.val();
 	var headerText = $.trim( headersTa.textarea.val() );
 	var reqHeaders = [];
-	
+
 	if( headerText != "" ) {
-		
+
 		var headerTextArray = headerText.split("\n");
 	    for (var i = 0; i < headerTextArray.length; i++) {
 	    	var name = headerTextArray[i].substring(0,headerTextArray[i].indexOf(":" ));
@@ -120,9 +120,9 @@ function createAjaxCtxFromUI() {
 	if($.inArray( method,["PUT", "POST"] ) != -1) {
 		reqEntity = $("textarea#put_post_entity").val();
 	}
-	
+
 	var ajaxContext = new AjaxContext( method, uri, reqEntity, reqHeaders);
-	
+
 //	var ajaxContext = {
 //		xhr: new XMLHttpRequest(),
 //		method:method,
@@ -166,12 +166,12 @@ function handleRequest(ajaxCtx) {
 //I really need to create a chili ext for this!
 function formatResponseHeaders( headers ) {
 	var headersArr = null;
-	
+
 	if( $.isArray(headers) )
 		headersArr = headers;
 	else
 		headersArr = headers.split( "\n" );
-	
+
 	var fmt = "<div class=\"respFormatting\">";
 	for( var i = 0; i < headersArr.length; i++ ) {
 		var name = "";
@@ -196,10 +196,10 @@ function formatResponseHeaders( headers ) {
 }
 
 function handleResponse( ajaxContext ) {
-	
+
 	if( ajaxContext.xhr.readyState != 4 ) 
 		return;
-	
+
 	var xhr = ajaxContext.xhr;
 	var method = ajaxContext.method;
 	var uri = ajaxContext.uri;
@@ -221,7 +221,7 @@ function handleResponse( ajaxContext ) {
 		}
 		if(storeIt)
 			storageObj("uriHistory",uriHist.sort());
-		
+
 		storeIt = false;
 		var headerHist = storageObj("headerHistory");
 		for( var i = 0; i < reqHeaders.length; i++ ) {//for each user specified header
@@ -234,8 +234,8 @@ function handleResponse( ajaxContext ) {
 		if(storeIt)
 			storageObj("headerHistory",headerHist.sort());
 	}
-		
-	
+
+
 	var responsesHeader = $("div#main_response_toolbar");
 	if( responsesHeader.css("display") == "none" )
 		responsesHeader.slideToggle("fast");
@@ -244,12 +244,12 @@ function handleResponse( ajaxContext ) {
 	//create new response div and setup buttons & such
 	var newResp = $("div#response_cloner").clone();
 	newResp.attr("id","response");
-	
+
 	$("#responses").prepend( newResp );
-	
-	
+
+
 	newResp.find( "div#title" ).html( xhr.status + " " + method + " " + uri );
-	
+
 	var lock = newResp.find("button#lock").button({
 		text: false,
 		icons: {
@@ -258,7 +258,7 @@ function handleResponse( ajaxContext ) {
 		}
 	}).click( function(event) {
 		var options;
-		
+
 		if( $(this).text() == "lock" ) {
 			options = {
 				label:"unlock",
@@ -277,7 +277,7 @@ function handleResponse( ajaxContext ) {
 		$(this).button("option",options);
 		return false;
 	});
-	
+
 	newResp.find('button#expand_collapse_response').button({
 		text: false,
 		icons: {
@@ -287,7 +287,7 @@ function handleResponse( ajaxContext ) {
 			var moreInfoButton = $(this).parent().find("button#more");
 			var header = $(this).parents("h3#responseHeader");
 			var options;
-			
+
 			if( $(this).text() == "collapse" ) {
 				moreInfoButton.button("disable");
 				header.removeClass("ui-corner-top");
@@ -356,9 +356,9 @@ function handleResponse( ajaxContext ) {
 			title:  $(this).parents("div#response").find("div#title").text()
 		});
 	});
-	
 
-	 
+
+
 	//headers response
 	//now let's gather the request info for the response formatResponseHeaders( xhr.getAllResponseHeaders() )
 	var hasMoreInfo = ajaxContext.hasReqHeaders() || ajaxContext.hasReqEntity();
@@ -371,16 +371,16 @@ function handleResponse( ajaxContext ) {
 		}).click( function(event) {
 				var moreInfo = $(this).parents("div#response").find("div#moreInfoDiv");
 				var options;
-				
+
 				if( $(this).text() == "more info" ) {
-					
+
 //					var expColButton = $(this).parent().find("button#expand_collapse_response");
 //					
 //					
 //					if( expColButton.text() == "expand" ) {
 //						expColButton.trigger("click");	
 //					}
-					
+
 					options = {
 						label:"less info",
 						icons: { 
@@ -408,7 +408,7 @@ function handleResponse( ajaxContext ) {
 			newResp.find( "pre#reqEntityPre" ).css("display", "");
 			newResp.find( "code#reqEntityCode" ).html( htmlify( ajaxContext.reqEntity ) );
 		}
-		 
+
 		newResp.find('button#save_request_scenario').button({
 				text: false,
 				icons: {
@@ -434,13 +434,13 @@ function handleResponse( ajaxContext ) {
 											   function() {
 													//console.log( "save on dialog clicked, disable." );
 													saveButton.button("disable");
-													
-													
+
+
 													var req = new Request( 
 															saveInput.find("input#save-request-input-name").val(),
 															ajaxContext);
 													requestStore.storeRequest(req);
-													
+
 //													var clone = cloneAjaxCtx(ajaxContext);
 //													clone.xhr = null;
 //													var reqSuitcase = storageObj("reqSuitcase");
@@ -459,13 +459,13 @@ function handleResponse( ajaxContext ) {
 										 }
 							}					
 					);
-									
+
 					saveInput.siblings(".ui-dialog-titlebar").hide();
 
-					
+
 				}).css("display", "");
 	}//done with more info code. 
-	
+
 	//do the select buttons.
 	newResp.find("div#reqSelectButtons").buttonset();
 	newResp.find("button#selectReqHeaders").button().click(
@@ -478,7 +478,7 @@ function handleResponse( ajaxContext ) {
 				newResp.find( "pre#reqEntityPre" ).selectText();
 			}
 	);
-	
+
 	newResp.find("div#respSelectButtons").buttonset();
 	newResp.find("button#selectRespHeaders").button().click(
 			function() {
@@ -490,10 +490,10 @@ function handleResponse( ajaxContext ) {
 				newResp.find( "pre#respEntityPre" ).selectText();
 			}
 	);
-	
+
 	//now let's handle the actual response...
 	newResp.find( "code#respHeadersCode" ).html( formatResponseHeaders( xhr.getAllResponseHeaders() ) );
-	
+
 	var contentType = xhr.getResponseHeader("Content-Type");
 	var entity = xhr.responseText;
     var fmt;
@@ -532,7 +532,7 @@ function handleResponse( ajaxContext ) {
     	newResp.find( "code#respEntityCode,#entityHeader" ).css("display", "none");
     }
     newResp.slideToggle("fast");
-	
+
 }//end handleResponse
 
 function htmlify( str ) {
@@ -547,22 +547,22 @@ function awesomeBar( items, request, response) {
 				var label = item.label;
 			else 
 				var label = item;//must be a string
-			
-		
+
+
 			for( var i = 0; i < terms.length; i++ ) {
 				if( label.toLowerCase().indexOf( terms[i].toLowerCase() ) == -1  )
 					return;
 			}
 			//this could return a string or a { label: "label", value: "val" }
 			return item;
-			
+
 		});
-		
+
 		//causes suggestions not to show because what the user typed already 
 		//matches the single suggestion left, so why show?
 		if( filteredItems.length == 1 && filteredItems[0] == uriAc.val() )
 			filteredItems = new Array();
-		
+
 		response(filteredItems);
 }
 /**
@@ -635,7 +635,7 @@ function storageObj( name, value ) {
 		//console.log( "storageObj("+name+","+value+")" );
 		return JSON.parse( storage(name) );
 	}
-		
+
 		//return eval(storage(name));
 	else
 		storage(name,JSON.stringify(value));
@@ -702,7 +702,7 @@ function editHistory( id, title ) {
 								if( item != "")
 									return item;
 							});
-							
+
 							storageObj(id, newHistory.sort());
 							histDialog.dialog("close");
 					   },
@@ -723,7 +723,7 @@ function loadSavedRequestInUI( name, loadOpts ) {
 	}
 	var suitcaseItem = requestStore.locateRequest(name);
 	var ajaxCtx = suitcaseItem.ajaxctx;
-	
+
 	//do put/post entity stuff.
 	if( loadOpts.entity ) {
 		if( loadOpts.entity && ajaxCtx.reqEntity && $.inArray( ajaxCtx.method,["PUT", "POST"] ) != -1 ) {
@@ -748,9 +748,9 @@ function loadSavedRequestInUI( name, loadOpts ) {
 	//alert( "setting uri " + ajaxCtx.uri );
 	if( loadOpts.uri )
 		uriAc.val(ajaxCtx.uri);
-	
 
-	
+
+
 	//do header stuff
 	if( loadOpts.headers ) {
 		var headers = "";
@@ -759,7 +759,7 @@ function loadSavedRequestInUI( name, loadOpts ) {
 				headers = headers+ajaxCtx.reqHeaders[i].name+": "+ajaxCtx.reqHeaders[i].value+"\n";
 			}
 			headersTa.textarea.val(headers);
-			
+
 			//only toggle (click) if it's not already open
 			//console.log($("input[id=modify_headers]:checked"));
 			if($("input[id=modify_headers]:checked").length==0) {
@@ -788,10 +788,10 @@ function init(){
 	if(! $.isArray(storageObj("headerHistory")) ) {
 		storage("headerHistory","[]");
 	}
-	
+
 	//setup uri fields...
 	$("div#submit_request_buttonset").buttonset();
-	
+
 	/*
 	 * Sup with all the bind/unbind in the focus event? I only want to capture mouse up
 	 * once per focus. So i bind a handler in focus event. To prevent
@@ -821,17 +821,17 @@ function init(){
 //					for(var i = 0; i < suitcaseItems.length; i++) {
 //						names[i] = "req suitcase: " + suitcaseItems[i].name;
 //					}
-					
+
 //					awesomeBar(uris.concat(storageObj("reqSuitcase").items), req, resp);
 					//TODO - change this to concat listRequestNames, need update to awesome bar too.
-					
+
 					//{ label: lab, value: val };
 					var names = requestStore.listRequestNames();
 					var nameObjs = [];
 					for(var i = 0; i < names.length; i++) {
 						nameObjs[i] = { label: names[i], value: names[i], crestType:"savedReq" }
 					}
-					
+
 					awesomeBar(uris.concat(nameObjs), req, resp);
 			},
 			select: function(event, ui){
@@ -848,10 +848,10 @@ function init(){
 			},
 			minLength: 2} 
 		).bind( "mouseup.uriparamcheck", function() {
-				
+
 				var range = $(this).getSelection();
 				var val = $(this).val();
-				
+
 				if( range.start != range.end )
 					return;//only apply if user clicked w/out selecting text
 //				
@@ -877,27 +877,27 @@ function init(){
 						selEnd = i;
 						break;
 					}	
-				
+
 				if( selStart != -1 && selEnd != -1 )
 					$(this).selectRange(selStart,selEnd+1);
-				
+
 				//console.log( ">>>" + JSON.stringify(range));
 			}
 		).focus(function(){
 			$(this).bind( "mouseup.focus",function(){
-				
+
 				if( selectedText() == "" )
 					$(this).select();
 				$(this).unbind( "mouseup.focus" );
 			});
-			
+
 		}).keypress(function(e) {
 		    if(e.keyCode == 13) {
 		    	handleRequest(createAjaxCtxFromUI());
 		    }
 		});
-	
-	
+
+
 	$("#submit_request").button({
 		text: true,
 		icons: {
@@ -918,7 +918,7 @@ function init(){
 	}).click(function() {
 		editHistory( "uriHistory", "Edit URI History" );
 	});//click
-	
+
 	$("button#load_request_scenario").button({
 		text: false,
 		icons: {
@@ -933,23 +933,39 @@ function init(){
 		 * 3) user cancels suitcase w/out selecting, ensure to unhide any of those
 		 *    hidden in #1 above. 
 		 */
-		
+
 		var disableDiv = $("<div id='screen-dis' style='position:absolute; opacity:0.3; z-index:1000; top:0; left:0; width:100%; height:100%; background-color:#000000;'/>") 
-		disableDiv.height($(document).height());
+		disableDiv.height($(document).height()+300);
 		$("body").append(disableDiv);
-		
+
 		var tabs = $("#suitcase-dialog-tabs").css("z-index","1001");
 		//handle saved requests tab...
-		var savedReqs = tabs.find("#saved-requests");
+		var savedReqs = tabs.find("#load-request");
 		//savedReqs.find("button#load").button();
 		var names = requestStore.listRequestNames();
+
+		var itemList = savedReqs.find( "div#items" );
+		itemList.empty();//remove everything then build the list back up...
 		
-		var nameList = savedReqs.find( "ol#selectable" );
-		nameList.empty();//remove everything then build the list back up...
+		//JPI - new new
+		//return; //new new
+		
+		//item loop
 		for(var i = 0; i < names.length; i++ ) {
-			var li = $("<li class='ui-widget-content' title='double click me'>"+names[i]+"</li>");
+			//set up each item just like they responses bar is (and others)
+			var item = $("<div class='ui-widget-content ui-corner-all crest-saved-item' style='padding-left: 5px; padding-top:4px; height: 26px; margin-bottom:5px;' title='double click me'></div>");
+			var itemButtons = $("<span style='float:right;padding-right:4px;'></span>");
+			var loadButton = $("<button id='edit' style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button();
+			var editButton = $("<button id='edit' style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button();
+			var deleteButton = $("<button id='delete' style='padding:0px;margin:0px;margin-left:2px;'>Delete</button>").button();
+			
+			itemButtons.append(loadButton).append(editButton).append(deleteButton);
+			item.append( itemButtons );
+			item.append(names[i]);
+			
+			
 			//var li = $("<li class='ui-state-default'>"+names[i]+"</li>");
-			li.attr( "id",names[i] ).click(function (){
+			item.attr( "id",names[i] ).click(function (){
 				console.log( "click '" +  $(this).attr("id") + "'" );
 				$(this).siblings().removeClass("ui-selected");
 				$(this).addClass("ui-selected");
@@ -964,10 +980,10 @@ function init(){
 				closeTabs();
 				loadSavedRequestInUI($(this).attr("id"),loadOpts);
 			});
-			nameList.append(li);
-		}
+			
+			itemList.append(item);
+		}//item loop
 		
-		//tabs.find("div#saved-requests-load-options").buttonset();
 		
 		tabs.find("button#suitcase-dialog-tabs-close").button({
 			text: false,
@@ -975,28 +991,28 @@ function init(){
 				primary: 'ui-icon-close'
 			}
 		}).click(function() { closeTabs() });
-		
+
 		tabs.tabs().css( "display", "block" );
-		
+
 		var closeTabs = function() {
 			console.log( "close tabs down" );
 			tabs.css( "display", "none" );
 			disableDiv.remove();
 		}
-		
+
 		//***
 		return;
-		
-		
+
+
 		var suitcaseDiv = $("div#suitcase-dialog-cloner").clone();
 		suitcaseDiv.attr("id","new-suitcase-dialog-cloner");
-		
-		//var reqSuitcase = storageObj("reqSuitcase");
-		
-		
-		
 
-		
+		//var reqSuitcase = storageObj("reqSuitcase");
+
+
+
+
+
 		suitcaseDiv.find("#suitcase-dialog-tabs").tabs();
 		var loadSelected;
 		var suitcaseDialog = suitcaseDiv.dialog({
@@ -1022,7 +1038,7 @@ function init(){
 							}
 							//close able tabs
 							//http://andrew.io/weblog/2010/01/a-close-button-for-jquery-ui-tabs/
-							
+
 							var reqItem = requestStore.locateRequest(editSelected.text());
 							var editReq = $("div#saved-req-item-edit-cloner").clone().attr( "id", "new-saved-req-item-edit-cloner" );
 							console.log( reqItem.date );
@@ -1038,7 +1054,7 @@ function init(){
 							editReq.find("textarea#saved-req-item-headers").text(headers);
 							editReq.find("textarea#saved-req-item-entity").text(reqItem.ajaxctx.reqEntity);
 							editReq.css( "display","block" );
-							
+
 
 							//let's re-purpose the dialog for edit
 							//editSelected.append(editReq);
@@ -1051,46 +1067,46 @@ function init(){
 									 $(this).dialog("close");
 								 }
 							});
-							
+
 						},
 						"Cancel":function() {
 							suitcaseDiv.dialog("close");
 						}
 					},
 					close: function(event, ui) {
-						
+
 						//had this method called on "Load" click, but all the clicks/events to populate
 						//the ui in loadSavedRequestInUI didn't work properly like they do in URI input for loading suitcase item. 
 						//seems to work find now when we call it after the modal dialog closes.
 						if(loadSelected && loadSelected.length>0) {
 							loadSavedRequestInUI(loadSelected.attr("id"));
 						}
-							
+
 						//suitcaseDiv.dialog("close");
 
 					}
 		});
 	});//click
-	
-	
+
+
 	//setup header fields...
 	$("div#header-autocomplete_buttonset").buttonset();
-	
+
 	headerAc = $("#header-autocomplete").autocomplete( {
 		source: function(req, resp){ 
 			var alreadySelected = headersTa.textarea.val();
 			var headerHist = storageObj("headerHistory");
-			
+
 			//remove items that are already selected.
 			var filteredHeaderHist = $.map(headerHist, function(item) {
 				if( alreadySelected.indexOf(item) != -1 )//must have already been selected
 					return;
-				
+
 				return item;//not already selected.
 			});
-				
+
 			awesomeBar( filteredHeaderHist, req, resp);
-		
+
 		},
 		minLength: 2, 
 		select: function(event,ui) {
@@ -1103,13 +1119,13 @@ function init(){
 			//headersTa.textarea.val() reflected the correct value of the textarea, but headers.text() would
 			//always return the deleted text. So to fix the issue, i set the text() to the val() prior
 			//to appending. I guess the append call appends to the value of text().
-			
+
 //			var headers = $("textarea#request_headers");
 //			headers.text( headers.val() ).append(ui.item.value).append("\n");
-			
+
 			headersTa.textarea.text( headersTa.textarea.val() ).append(ui.item.value).append("\n");
 
-			
+
 			headersTa.checkExpand();
 		},
 		close: function(even,ui) {
@@ -1118,7 +1134,7 @@ function init(){
 			//already added. If it's not in text area, user must have look at the drop down and
 			//not selected anything (like clicking elsewhere on the page or pressing esc).
 			//var headersArea = $("textarea#request_headers").val();
-			
+
 			var headersArea = headersTa.textarea.val();
 			if( headersArea.indexOf($("#header-autocomplete").val()) != -1 )
 				$("#header-autocomplete").val("");
@@ -1135,7 +1151,7 @@ function init(){
 				return false;
 			}
 	  );
-	
+
 	$("button#load_header_scenario").button({
 		text: false,
 		icons: {
@@ -1144,7 +1160,7 @@ function init(){
 	}).click(function() {
 		alert( "Load Header Scenario clicked" );
 	});//click
-	
+
 	$('button#edit_header_history').button({
 		text: false,
 		icons: {
@@ -1153,34 +1169,34 @@ function init(){
 	}).click(function() {
 		editHistory( "headerHistory", "Edit Header History" );
 	});//click
-	
+
 
 	//$(".crest-ui-awesome-bar")
 
 	//JPI
 	//$("#method_radioset").buttonset();
-	
+
 	$("#reset_request_builder").button().click(function() {
 		var getButton = $("input#method_get").button();
 		getButton.trigger("click").trigger("change").trigger("refresh");
 		uriAc.val("");
 		headerAc.val("");
 		headersTa.textarea.val("");
-	
+
 		if( $("div#modify_headers").css("display") != "none")
 			$("input#modify_headers").trigger("click").trigger("change").trigger("refresh");
-			
+
 		putPostEntityTa.val("");
-		
+
 		if($(this).is(":checked")) {
 			$(this).attr('checked', false).trigger("change").trigger("refresh");
 		}
 	});
-	
+
 	$("input#modify_headers").button().click(function() {
 		$("div#modify_headers").slideToggle("fast");
 	});
-	
+
 	$("#requestBuilderToolbar").buttonset();
 	$("input[name=method_radio]").change(function() {
 		var checked = $("input[name=method_radio]:checked").val();
@@ -1192,9 +1208,9 @@ function init(){
 		} else if( !invisible )//not put or post, so make invisible if not already
 			putPostDiv.slideToggle("fast");
 	});
-	
 
-	
+
+
 	$('button#only-responses').button({
 		text: false,
 		icons: {
@@ -1203,8 +1219,8 @@ function init(){
 	}).click(function() {
 		$("#requestBuilder").slideToggle('fast');
 	});
-	
-	
+
+
 	$('button#collapse-all').button({
 		text: false,
 		icons: {
@@ -1231,7 +1247,7 @@ function init(){
 				button.trigger("click");
 		}
 	});
-	
+
 	$('button#trash-all').button({
 		text: false,
 		icons: {
@@ -1240,16 +1256,16 @@ function init(){
 	}).click(function() {
 		//$("div#response").remove();
 		//$($("div#response")[0]).find("button#lock")
-		
+
 		var responses = $("div#response");
 		for( var i = 0; i < responses.length; i++ ) {
 			var response = $(responses[i]);
 			if( response.find("button#lock").text() == "lock" )
 				response.remove();
-			
+
 		}
 	});
-	
+
 	headersTa = $("textarea#request_headers").autogrow();
 	putPostEntityTa = $("textarea#put_post_entity");
 }
@@ -1276,19 +1292,19 @@ $(window).load(function() {
 			  dataType: "script",
 			  async: false
 			});
-		
+
 		var uriHistory = storageObj("uriHistory");
 		var headerHistory = storageObj("headerHistory");
-		
-		
+
+
 		uriHistory = uriHistory.concat(devUriHistory);
 		headerHistory = headerHistory.concat(devHeaderHistory);
-		
-		
+
+
 		toUniqueArray( uriHistory );
 		toUniqueArray( headerHistory );
-		
-		
+
+
 		storageObj("uriHistory",uriHistory);
 		storageObj("headerHistory",headerHistory);
 	}
