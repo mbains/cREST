@@ -20,7 +20,9 @@
     	
 		<script type="text/javascript" src="js/crest.js"></script>
 	</head>
-	<body>
+<body>
+<div id="screen-disable" style="display:none;position:absolute; opacity:0.3; z-index:1000; top:0; left:0; width:100%; height:100%; background-color:#000000;">
+</div>
 <div id="body">
 	<div id="requestBuilder" style="padding-bottom: 5px;">
 		<h3 id="requestBuilderHeader"class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
@@ -71,7 +73,7 @@
 								<button id="submit_request" 
 								   class="crest-ui-autocomplete-input-button"
 								   type="submit" value="Submit">Request</button>
-								<button class="crest-ui-autocomplete-input-button" id="load_request_scenario">load a saved request scenario</button>
+								<button class="crest-ui-autocomplete-input-button" id="load_request_scenario">load/edit saved data</button>
 								<button class="crest-ui-autocomplete-input-button" id="edit_uri_history">edit uri history</button>								   
 							</div>
 						</td>
@@ -84,28 +86,13 @@
 		#selectable .ui-selected { background: #ACDD4A; color: black; }
 		#selectable { list-style-type: none; margin: 0; padding: 0; width: 100%; }
 		#selectable li { margin: 3px; padding: 0.4em; font-size: 1em; /*height: 18px;*/ }
-	</style>
-<!-- 
-	<div id="main_response_toolbar" style="display:none;">
-		<div class="ui-corner-all ui-widget-header" style="height: 29px; margin-bottom:10px;margin-top:4px;">
-			<span class="respButtons"> 
-		   		<button id="only-responses" style="padding:0px;margin:0px;">show/hide response builder</button>
-				<button id="collapse-all" style="padding:0px;margin:0px;">collapse all</button>
-				<button id="expand-all" style="padding:0px;margin:0px;">expand all</button>
-				<button id="trash-all" style="padding:0px;margin:0px;">trash all</button>
-			</span>
-			<div id="title" class="title1">
-				Responses
-			</div>
-		</div>
-	</div>
- -->
-	<div id="suitcase-dialog-tabs" style="display:none;">
+	</style><!-- suitcase-dialog-tabs -->
+	<div id="load-edit-tabs" style="display:none;">
 		<ul>
 			<li><a href="#load-request">Load Request</a></li>
 			<li><a href="#uri-history">URI History</a></li>
 			<li><a href="#edit-request">Edit Request</a></li>
-			<button id="suitcase-dialog-tabs-close" style="float:right;">Close</button>
+			<button id="load-edit-tabs-close" style="float:right;">Close</button>
 		</ul>
 		<div id="load-request">
 			<div id="saved-requests-load-options">
@@ -212,9 +199,8 @@
 			<div class="ui-widget-content" style="border-top: 0px; border-left: 0px; border-right: 0px; display: none" id="moreInfoDiv">
 				<div style="padding:10px;">
 					<div class="selectButtons" id="reqSelectButtons" style="float:right;padding-top:10px">
-		       			Select:
-						<button id="selectReqHeaders">Headers</button>
-						<button id="selectReqEntity">Entity</button>
+						<button id="selectReqHeaders" style="display:none">Headers</button>
+						<button id="selectReqEntity" style="display:none">Entity</button>
 					</div>
 					<pre id="reqHeadersPre" contenteditable="true" style="display:none; padding-bottom:10px;"><code id="reqHeadersCode"></code></pre>
 	       			<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
@@ -226,9 +212,8 @@
 	       		<!-- span class="responseDataHeader">Entity</span -->
 
 	       		<div class="selectButtons" id="respSelectButtons" style="float:right;padding-top:10px">
-		       			Select:
-						<button id="selectRespHeaders">Headers</button>
-						<button id="selectRespEntity">Entity</button>
+						<button id="selectRespHeaders" style="display:none">Headers</button>
+						<button id="selectRespEntity" style="display:none">Entity</button>
 				</div>
 	       		<pre contenteditable="true" style="width:75%;padding-bottom:10px;" id="respHeadersPre"><code id="respHeadersCode"></code></pre>
 	       		<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
@@ -241,12 +226,14 @@
 	<div id="edit-div-history-cloner" style="display:none;">
 		<textarea id="history" class="edit_history"></textarea>
 	</div>
-	<div id="save-request-input-cloner" style="display:none;">
-		Name: <input id="save-request-input-name" style="width: 90%;z-index: 100;"/>
-	</div>
+	
 
 </div><!-- End demo -->
+
 		<!-- 
+<form>
+
+</form>
 		<h2>TODOs/Features</h2>
 		<div>
 			<ol>

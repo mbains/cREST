@@ -1,29 +1,17 @@
-/**
- * New Features Jan 2011:
- * - can click enter now to submit a request.
- * - much better history now with saving of entire requests.
- * 
- * TODO - i need to break up this code. 
- * 	1) Create an object representing the front end which has references to frontend jQuery objects. This way 
- * 	   we don't have to write the same selectors in different places. 
- *  2) Create a Util.js and get the common junk out of here. 
- *    
- * @param method
- * @param uri
- * @param reqEntity
- * @param reqHeaders
- * @returns {AjaxContext}
- */
-
 function Request(name,ajaxCtx) {
 	this.name = name;
 	this.ajaxctx = ajaxCtx;
 	this.date;
 	this.ajaxctx.xhr = null;
 }
-
-function RequestStore(name) {
-	this.name = name;
+/**
+ * Encapsulate access to persistence here so we can easily get off of 
+ * localStorage if need be; perhaps Web SQL database?
+ * 
+ * TODO: Let's get the uri and header history behind this object too. 
+ */
+function Persistence() {
+	this.name = "reqSuitcase";
 
 	this.listRequests = function() {
 		return storageObj(this.name).items;
@@ -35,38 +23,62 @@ function RequestStore(name) {
 
 	this.locateRequest = function(name) {
 		var store = storageObj(this.name);
-		for(var i = 0; i < store.items.length; i++ ) {
+		for(var i = 0; i < store.items.length; i++ )
 			if( store.items[i].name == name)
-				return store.items[i];
-		}		
+				return store.items[i];		
 	}
 
 	this.storeRequest = function(request) {
 		var store = storageObj(this.name);
 		request.date = new Date();
 		store.items.push(request);
-		this.storeRequestNames(store);
-		storageObj(this.name,store)
-
+		this.storeRequestsAndNames(store);
 	}
 
-	this.storeRequestNames = function(store) {
+	this.removeRequest = function(name) {
+		var store = storageObj(this.name);
+		var newStore = {"items":[]};
+		for(var i = 0; i < store.items.length; i++ )
+			if( store.items[i].name != name)
+				newStore.items.push(store.items[i]);
+		
+
+		this.storeRequestsAndNames(newStore);
+	}
+	
+	this.storeRequestsAndNames = function(store) {
 		var storeNames = new Array();
 		for(var i = 0; i < store.items.length; i++ ) {
 			storeNames.push( store.items[i].name );
 		}
 		storageObj(this.name+"Items",storeNames);
+		storageObj(this.name,store)
 	}
-
+	
 	this.init = function() {
 		var store = storageObj(this.name); 
 		if( store == null ) {
 			store = {"items":[]};
-			storageObj(this.name, store );
 		}
-
-		this.storeRequestNames(store);
-
+		this.storeRequestsAndNames(store);
+		return this;
+	}
+	this.goCrazy = function() {
+		var store = storageObj(this.name);
+		var newItems = [];
+		for(var i = 0; i < 100; i++ ) {
+			newItems.push(store.items[i]);
+		}
+		store.items = newItems;
+		this.storeRequestsAndNames(store);
+		return;
+		
+		var item = store.items[0];
+		for(var i = 0; i < 200; i++) {
+			var req = new Request(i+" "+item.name,item.ajaxctx);
+			store.items.push(req);
+		}
+		
 	}
 }
 
@@ -164,7 +176,7 @@ function handleRequest(ajaxCtx) {
 }
 
 //I really need to create a chili ext for this!
-function formatResponseHeaders( headers ) {
+function formatHeaders( headers ) {
 	var headersArr = null;
 
 	if( $.isArray(headers) )
@@ -360,7 +372,7 @@ function handleResponse( ajaxContext ) {
 
 
 	//headers response
-	//now let's gather the request info for the response formatResponseHeaders( xhr.getAllResponseHeaders() )
+	//now let's gather the request info for the response formatHeaders( xhr.getAllResponseHeaders() )
 	var hasMoreInfo = ajaxContext.hasReqHeaders() || ajaxContext.hasReqEntity();
 	if( hasMoreInfo ) {
 		newResp.find('button#more').button({
@@ -402,7 +414,7 @@ function handleResponse( ajaxContext ) {
 		).css("display", "");
 		if( ajaxContext.hasReqHeaders() ) {
 			newResp.find( "pre#reqHeadersPre" ).css("display", "");
-			newResp.find( "code#reqHeadersCode" ).html( formatResponseHeaders( reqHeaders ) );
+			newResp.find( "code#reqHeadersCode" ).html( formatHeaders( reqHeaders ) );
 		}
 		if( ajaxContext.hasReqEntity() ) {
 			newResp.find( "pre#reqEntityPre" ).css("display", "");
@@ -423,34 +435,21 @@ function handleResponse( ajaxContext ) {
 
 					//saveInput.find("input#save-request-input-name").val(method+" "+uri);
 					saveInput.find("input#save-request-input-name").val("Name me");
+					saveInput.find("input#save-request-input-uri").val(ajaxContext.uri);
 					$(saveInput).dialog(
 							{
 								autoOpen: true,
-								/*modal: true,*/
+								modal: true,
 								width: 600,
-								height:130,
-								/*title: "Name this request",*/
+								height:500,
+								title: "Save this request for later use.",
 								buttons: { "Save" :
 											   function() {
-													//console.log( "save on dialog clicked, disable." );
 													saveButton.button("disable");
-
-
 													var req = new Request( 
 															saveInput.find("input#save-request-input-name").val(),
 															ajaxContext);
-													requestStore.storeRequest(req);
-
-//													var clone = cloneAjaxCtx(ajaxContext);
-//													clone.xhr = null;
-//													var reqSuitcase = storageObj("reqSuitcase");
-//													reqSuitcase.items.push({
-//															"name":saveInput.find("input#save-request-input-name").val(),
-//															"ajaxctx":clone
-//													});
-//													
-//													storageObj("reqSuitcase", reqSuitcase);
-
+													persistence.storeRequest(req);
 													saveInput.dialog("close");
 											   },
 											"Cancel":function() {
@@ -460,46 +459,53 @@ function handleResponse( ajaxContext ) {
 							}					
 					);
 
-					saveInput.siblings(".ui-dialog-titlebar").hide();
+					//saveInput.siblings(".ui-dialog-titlebar").hide();
 
 
 				}).css("display", "");
+		
+		//do the select buttons.
+		newResp.find("div#reqSelectButtons").prepend("Select: ");
+		if(ajaxContext.hasReqHeaders()) {
+			newResp.find("button#selectReqHeaders").button().click(
+					function() {
+						newResp.find( "pre#reqHeadersPre" ).selectText();
+					}
+			).css("display","");
+		}
+		if( ajaxContext.hasReqEntity() ) {
+			newResp.find("button#selectReqEntity").button().click(
+					function() {
+						newResp.find( "pre#reqEntityPre" ).selectText();
+					}
+			).css("display","");
+		}
 	}//done with more info code. 
 
-	//do the select buttons.
-	newResp.find("div#reqSelectButtons").buttonset();
-	newResp.find("button#selectReqHeaders").button().click(
-			function() {
-				newResp.find( "pre#reqHeadersPre" ).selectText();
-			}
-	);
-	newResp.find("button#selectReqEntity").button().click(
-			function() {
-				newResp.find( "pre#reqEntityPre" ).selectText();
-			}
-	);
 
-	newResp.find("div#respSelectButtons").buttonset();
+
+
+
+
+	//now let's handle the actual response...
+	newResp.find( "code#respHeadersCode" ).html( formatHeaders( xhr.getAllResponseHeaders() ) );
+	newResp.find("div#respSelectButtons").prepend("Select: ");
 	newResp.find("button#selectRespHeaders").button().click(
 			function() {
 				newResp.find( "pre#respHeadersPre" ).selectText();
 			}
-	);
-	newResp.find("button#selectRespEntity").button().click(
-			function() {
-				newResp.find( "pre#respEntityPre" ).selectText();
-			}
-	);
-
-	//now let's handle the actual response...
-	newResp.find( "code#respHeadersCode" ).html( formatResponseHeaders( xhr.getAllResponseHeaders() ) );
-
+	).css("display","");
 	var contentType = xhr.getResponseHeader("Content-Type");
 	var entity = xhr.responseText;
     var fmt;
     var chiliClass;
     if(entity != null && entity != "" ) {
-    	
+    	console.log("shit shit shist shist");
+    	newResp.find("button#selectRespEntity").button().click(
+    			function() {
+    				newResp.find( "pre#respEntityPre" ).selectText();
+    			}
+    	).css("display", "");
     	var entityCode = newResp.find( "code#respEntityCode" );
     	
         try {
@@ -631,9 +637,12 @@ function formatXml(xml) {
  * gets or saves an object from/to storage. 
  */
 function storageObj( name, value ) {
+	var start = (new Date()).getTime();
 	if( typeof value === "undefined" ) {
 		//console.log( "storageObj("+name+","+value+")" );
-		return JSON.parse( storage(name) );
+		var obj = JSON.parse( storage(name) );
+		console.log("storageObj("+name+") " + (new Date().getTime()-start) );
+		return obj;
 	}
 
 		//return eval(storage(name));
@@ -719,10 +728,13 @@ function loadSavedRequestInUI( name, loadOpts ) {
 				headers:true,
 				entity:true
 		}
-		console.log( "default opts" );
 	}
-	var suitcaseItem = requestStore.locateRequest(name);
-	var ajaxCtx = suitcaseItem.ajaxctx;
+	var request = persistence.locateRequest(name);
+	if(!request) {
+		alert( "Unable to load request with name '" + name + "'" );
+	}
+	
+	var ajaxCtx = request.ajaxctx;
 
 	//do put/post entity stuff.
 	if( loadOpts.entity ) {
@@ -769,15 +781,16 @@ function loadSavedRequestInUI( name, loadOpts ) {
 			}
 		} else headersTa.textarea.val("");//TODO - test this out.		
 	}
-	return suitcaseItem;
+	return request;
 }
 var uriAc;
 var headerAc;
 var headersTa;
 var putPostEntityTa
 var savedReqURIOverride;
-var requestStore = new RequestStore("reqSuitcase");
-requestStore.init();
+var persistence = new Persistence().init();
+var storeTabs;
+
 
 function init(){
 	//to make things easier, let's just ensure there's always a uriHistory and
@@ -800,11 +813,6 @@ function init(){
 	 * in the text field on the initial focus only if the user has not
 	 * selected text.
 	 * 
-	 * 09/25/10 - also adding support for {params}
-	 * 
-	 * 01/31/11 - updated autocomplete to include suitcase items enabling a more complex history. Suitcase itmes
-	 * are just objects that remember everything about a request. We'll use 'em to prepopulate everything in
-	 * the gui. 
 	 * 
 	 * 
 	 * NOTE: see http://api.jquery.com/unbind/ and http://api.jquery.com/bind on using namespaces for events. Calling unbind("mouseup") will
@@ -814,19 +822,8 @@ function init(){
 	uriAc = $("#uri_autocomplete").autocomplete( {
 			source: function(req, resp){
 					var uris = storageObj("uriHistory");
-//					
-//					var suitcaseItems = storageObj("reqSuitcase").items;
-//					//console.log( suitcaseItems );
-//					var names = new Array();
-//					for(var i = 0; i < suitcaseItems.length; i++) {
-//						names[i] = "req suitcase: " + suitcaseItems[i].name;
-//					}
-
-//					awesomeBar(uris.concat(storageObj("reqSuitcase").items), req, resp);
-					//TODO - change this to concat listRequestNames, need update to awesome bar too.
-
 					//{ label: lab, value: val };
-					var names = requestStore.listRequestNames();
+					var names = persistence.listRequestNames();
 					var nameObjs = [];
 					for(var i = 0; i < names.length; i++) {
 						nameObjs[i] = { label: names[i], value: names[i], crestType:"savedReq" }
@@ -836,8 +833,8 @@ function init(){
 			},
 			select: function(event, ui){
 				if(ui.item && ui.item.crestType == "savedReq") {
-					var suitcaseItem = loadSavedRequestInUI( ui.item.value );
-					savedReqURIOverride = suitcaseItem.ajaxctx.uri;		
+					var reqItem = loadSavedRequestInUI( ui.item.value );
+					savedReqURIOverride = reqItem.ajaxctx.uri;		
 				}
 			},
 			close: function(event, ui) {
@@ -924,169 +921,7 @@ function init(){
 		icons: {
 			primary: 'ui-icon-suitcase'
 		}
-	}).click(function() {
-		/**
-		 * TODO
-		 * 1) hide headers/req entity fields on click
-		 * 2) don't allow suitcase to be open while user submits requests. This
-		 *    ensures suitcase is always up to date
-		 * 3) user cancels suitcase w/out selecting, ensure to unhide any of those
-		 *    hidden in #1 above. 
-		 */
-
-		var disableDiv = $("<div id='screen-dis' style='position:absolute; opacity:0.3; z-index:1000; top:0; left:0; width:100%; height:100%; background-color:#000000;'/>") 
-		disableDiv.height($(document).height()+300);
-		$("body").append(disableDiv);
-
-		var tabs = $("#suitcase-dialog-tabs").css("z-index","1001");
-		//handle saved requests tab...
-		var savedReqs = tabs.find("#load-request");
-		//savedReqs.find("button#load").button();
-		var names = requestStore.listRequestNames();
-
-		var itemList = savedReqs.find( "div#items" );
-		itemList.empty();//remove everything then build the list back up...
-		
-		//JPI - new new
-		//return; //new new
-		
-		//item loop
-		for(var i = 0; i < names.length; i++ ) {
-			//set up each item just like they responses bar is (and others)
-			var item = $("<div class='ui-widget-content ui-corner-all crest-saved-item' style='padding-left: 5px; padding-top:4px; height: 26px; margin-bottom:5px;' title='double click me'></div>");
-			var itemButtons = $("<span style='float:right;padding-right:4px;'></span>");
-			var loadButton = $("<button id='edit' style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button();
-			var editButton = $("<button id='edit' style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button();
-			var deleteButton = $("<button id='delete' style='padding:0px;margin:0px;margin-left:2px;'>Delete</button>").button();
-			
-			itemButtons.append(loadButton).append(editButton).append(deleteButton);
-			item.append( itemButtons );
-			item.append(names[i]);
-			
-			
-			//var li = $("<li class='ui-state-default'>"+names[i]+"</li>");
-			item.attr( "id",names[i] ).click(function (){
-				console.log( "click '" +  $(this).attr("id") + "'" );
-				$(this).siblings().removeClass("ui-selected");
-				$(this).addClass("ui-selected");
-			}).dblclick(function (){
-
-				var loadOpts = {
-						uri:$("input[id=load_uri]:checked").length>0,
-						headers:$("input[id=load_headers]:checked").length>0,
-						entity:$("input[id=load_entity]:checked").length>0
-				}
-				console.log( loadOpts );
-				closeTabs();
-				loadSavedRequestInUI($(this).attr("id"),loadOpts);
-			});
-			
-			itemList.append(item);
-		}//item loop
-		
-		
-		tabs.find("button#suitcase-dialog-tabs-close").button({
-			text: false,
-			icons: {
-				primary: 'ui-icon-close'
-			}
-		}).click(function() { closeTabs() });
-
-		tabs.tabs().css( "display", "block" );
-
-		var closeTabs = function() {
-			console.log( "close tabs down" );
-			tabs.css( "display", "none" );
-			disableDiv.remove();
-		}
-
-		//***
-		return;
-
-
-		var suitcaseDiv = $("div#suitcase-dialog-cloner").clone();
-		suitcaseDiv.attr("id","new-suitcase-dialog-cloner");
-
-		//var reqSuitcase = storageObj("reqSuitcase");
-
-
-
-
-
-		suitcaseDiv.find("#suitcase-dialog-tabs").tabs();
-		var loadSelected;
-		var suitcaseDialog = suitcaseDiv.dialog({
-					autoOpen: true,
-					modal: true,
-					width: 600,
-					height:400,
-					title: "Saved Items",
-					buttons: {
-						"Load":function() {
-							loadSelected = $( ".ui-selected", this );
-							if(loadSelected.length<1) {
-								alert("Please select a saved request.");
-								return;
-							}
-							suitcaseDiv.dialog("close");
-						},
-						"Edit":function() {
-							var editSelected = $( ".ui-selected", this );
-							if(editSelected.length<1) {
-								alert("Please select a saved request.");
-								return;
-							}
-							//close able tabs
-							//http://andrew.io/weblog/2010/01/a-close-button-for-jquery-ui-tabs/
-
-							var reqItem = requestStore.locateRequest(editSelected.text());
-							var editReq = $("div#saved-req-item-edit-cloner").clone().attr( "id", "new-saved-req-item-edit-cloner" );
-							console.log( reqItem.date );
-							editReq.find("input#saved-req-item-name").val(reqItem.name);
-							editReq.find("input#saved-req-item-method").val(reqItem.ajaxctx.method);
-							editReq.find("input#saved-req-item-uri").val(reqItem.ajaxctx.uri);
-							var headers = "";
-							if( reqItem.ajaxctx.reqHeaders && reqItem.ajaxctx.reqHeaders.length > 0 ) {
-								for(var i = 0; i < reqItem.ajaxctx.reqHeaders.length; i++) {
-									headers = headers+reqItem.ajaxctx.reqHeaders[i].name+": "+reqItem.ajaxctx.reqHeaders[i].value+"\n";
-								}
-							}
-							editReq.find("textarea#saved-req-item-headers").text(headers);
-							editReq.find("textarea#saved-req-item-entity").text(reqItem.ajaxctx.reqEntity);
-							editReq.css( "display","block" );
-
-
-							//let's re-purpose the dialog for edit
-							//editSelected.append(editReq);
-							$(this).html( editReq );
-							$(this).dialog( "option", "buttons", { 
-								"Save": function() { 
-									alert("okay"); 
-								},
-								 "Cancel": function() {
-									 $(this).dialog("close");
-								 }
-							});
-
-						},
-						"Cancel":function() {
-							suitcaseDiv.dialog("close");
-						}
-					},
-					close: function(event, ui) {
-
-						//had this method called on "Load" click, but all the clicks/events to populate
-						//the ui in loadSavedRequestInUI didn't work properly like they do in URI input for loading suitcase item. 
-						//seems to work find now when we call it after the modal dialog closes.
-						if(loadSelected && loadSelected.length>0) {
-							loadSavedRequestInUI(loadSelected.attr("id"));
-						}
-
-						//suitcaseDiv.dialog("close");
-
-					}
-		});
-	});//click
+	}).click(function() {displayRequestStore()});//click
 
 
 	//setup header fields...
@@ -1170,12 +1005,6 @@ function init(){
 		editHistory( "headerHistory", "Edit Header History" );
 	});//click
 
-
-	//$(".crest-ui-awesome-bar")
-
-	//JPI
-	//$("#method_radioset").buttonset();
-
 	$("#reset_request_builder").button().click(function() {
 		var getButton = $("input#method_get").button();
 		getButton.trigger("click").trigger("change").trigger("refresh");
@@ -1208,8 +1037,6 @@ function init(){
 		} else if( !invisible )//not put or post, so make invisible if not already
 			putPostDiv.slideToggle("fast");
 	});
-
-
 
 	$('button#only-responses').button({
 		text: false,
@@ -1265,9 +1092,95 @@ function init(){
 
 		}
 	});
-
 	headersTa = $("textarea#request_headers").autogrow();
 	putPostEntityTa = $("textarea#put_post_entity");
+
+	storeTabs = $("#load-edit-tabs");
+	storeTabs.tabs();
+	storeTabs.find("button#load-edit-tabs-close").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-close'
+		}
+	}).click(function() { closeRequestStore() });
+	
+
+}
+var disableDiv;
+function enableDisableDiv() {
+	if(!disableDiv)
+		disableDiv = $("div#screen-disable");
+
+	disableDiv.height($(document).height()+300);
+	disableDiv.css("display","block");
+	return parseInt(disableDiv.css("z-index"))+1;//give caller's a z-index on top of this one
+}
+function loadAndCloseRequestStore(name) {
+	var loadOpts = {
+			uri:$("input[id=load_uri]:checked").length>0,
+			headers:$("input[id=load_headers]:checked").length>0,
+			entity:$("input[id=load_entity]:checked").length>0
+	}
+	closeRequestStore();
+	loadSavedRequestInUI(name,loadOpts);			
+}
+function closeRequestStore() {
+	storeTabs.css( "display", "none" );
+	disableDiv.css( "display", "none" );
+}
+/**
+ * TODO - performance isn't great when i tested with a couple hundred saved items. around 300ms
+ */
+function displayRequestStore() {
+	var start = new Date().getTime();
+	//handle saved requests tab...
+	var savedReqs = storeTabs.find("#load-request");
+	var names = persistence.listRequestNames();
+	var itemList = savedReqs.find( "div#items" );
+	itemList.empty();//remove everything then build the list back up...
+	for(var i = 0; i < names.length; i++ ) {
+		//set up each item just like they responses bar is (and others)
+		//for some reason the clone approach i've used before isn't working hence all the html
+		var item = $("<div class='ui-widget-content ui-corner-all crest-saved-item' style='line-height:180%; padding-left: 5px; padding-top:4px; height: 26px; margin-bottom:5px;' title='double click me'></div>");
+		var itemButtons = $("<span style='float:right;padding-right:4px;'></span>");
+		
+		var loadButton = $("<button id='"+names[i]+"' style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button().click(
+				function() {
+					loadAndCloseRequestStore( $(this).attr("id") );
+				});
+		
+		var deleteButton = $("<button id='"+names[i]+"' style='padding:0px;margin:0px;margin-left:2px;'>Delete</button>").button().click(
+				function() {
+					$(this).parent().parent().remove()
+					persistence.removeRequest($(this).attr("id"));
+				});
+		
+		itemButtons.append(loadButton).append(deleteButton);
+		item.append( itemButtons );
+		item.append(names[i]);
+		
+		
+		//var li = $("<li class='ui-state-default'>"+names[i]+"</li>");
+		item.attr( "id",names[i] ).dblclick(function (){
+			loadAndCloseRequestStore( $(this).attr("id") );
+		}).mouseover(function () {
+		    $(this).css("background", "#ACDD4A");
+		    $(this).css("font-weight", "bold");
+		  }).mouseout(function () {
+		    $(this).css("background", "");
+		    $(this).css("font-weight", "");
+		  });
+		
+		itemList.append(item);
+	}//item loop	
+	
+	
+	//display tabs first so disable div see it's height
+	storeTabs = $("#load-edit-tabs").css( "display", "block" );
+	var oneAbove = enableDisableDiv();
+	storeTabs.css("z-index",oneAbove);
+	
+	console.log("displayRequestStore: " + (new Date().getTime()-start));
 }
 
 function toUniqueArray(a){
@@ -1309,6 +1222,7 @@ $(window).load(function() {
 		storageObj("headerHistory",headerHistory);
 	}
 });
+
 
 //http://stackoverflow.com/questions/985272/jquery-selecting-text-in-an-element-akin-to-highlighting-with-your-mouse
 jQuery.fn.selectText = function() {
