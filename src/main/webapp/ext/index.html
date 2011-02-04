@@ -226,7 +226,9 @@
 	<div id="edit-div-history-cloner" style="display:none;">
 		<textarea id="history" class="edit_history"></textarea>
 	</div>
-	
+	<div id="save-request-input-cloner" style="display:none;">
+		Name: <input id="save-request-input-name" style="width: 90%;z-index: 100;"/>
+	</div>	
 
 </div><!-- End demo -->
 
@@ -237,9 +239,12 @@
 		<h2>TODOs/Features</h2>
 		<div>
 			<ol>
-				<li>allow replays to be kept in localStorage for use outside of current session</li>
-				<li>hide responses bar when no responses exist</li>
-				<li>Build links based on wadl</li>
+				<li>Get history in new tabs and remove pencil icon</li>
+				<li>Get saved request working with headers.</li>
+				<li>Sort saved requests by date</li>
+				<li>Put a tool tip explaining response codes</li>
+				<li>Hide responses toolbar when trash all is clicked</li>
+				
 				<li>Get rid of spell checker</li>
 				<li>Show all request headers. Maybe the chrome ext api has a way to get at them?</li>
 				<li>Create html links when seen in response entity</li>
