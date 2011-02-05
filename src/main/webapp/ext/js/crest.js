@@ -1165,10 +1165,10 @@ function displayRequestStore() {
 			loadAndCloseRequestStore( $(this).attr("id") );
 		}).mouseover(function () {
 		    $(this).css("background", "#ACDD4A");
-		    $(this).css("font-weight", "bold");
+		    //$(this).css("font-weight", "bold");
 		  }).mouseout(function () {
 		    $(this).css("background", "");
-		    $(this).css("font-weight", "");
+		    //$(this).css("font-weight", "");
 		  });
 		
 		itemList.append(item);
