@@ -90,7 +90,9 @@ function AjaxContext(method,uri,reqEntity,reqHeaders) {
 	this.reqHeaders = reqHeaders;
 	this.respHeaders = null;
 	this.respEntity = null;
-
+	this.startTime = 0;
+	this.respTime = 0;
+	
 	this.hasReqHeaders = function() {
 		return $.isArray( this.reqHeaders ) && this.reqHeaders.length > 0;
 	};
@@ -160,6 +162,7 @@ function handleRequest(ajaxCtx) {
 	    })(ajaxCtx);
     
     	//xhr.open(method, url, async, username, password);
+		ajaxCtx.startTime = new Date().getTime();
 	    ajaxCtx.xhr.open( ajaxCtx.method, ajaxCtx.uri, true );
     	for (var i = 0; i < ajaxCtx.reqHeaders.length; i++) {
     		ajaxCtx.xhr.setRequestHeader(ajaxCtx.reqHeaders[i].name, 
@@ -211,7 +214,8 @@ function handleResponse( ajaxContext ) {
 
 	if( ajaxContext.xhr.readyState != 4 ) 
 		return;
-
+	ajaxContext.respTime = new Date().getTime()-ajaxContext.startTime
+	console.log( "response time: " + ajaxContext.respTime );
 	var xhr = ajaxContext.xhr;
 	var method = ajaxContext.method;
 	var uri = ajaxContext.uri;
@@ -500,7 +504,6 @@ function handleResponse( ajaxContext ) {
     var fmt;
     var chiliClass;
     if(entity != null && entity != "" ) {
-    	console.log("shit shit shist shist");
     	newResp.find("button#selectRespEntity").button().click(
     			function() {
     				newResp.find( "pre#respEntityPre" ).selectText();
@@ -1104,7 +1107,7 @@ function init(){
 		}
 	}).click(function() { closeRequestStore() });
 	
-
+	setupTestButton();
 }
 var disableDiv;
 function enableDisableDiv() {
@@ -1141,8 +1144,9 @@ function displayRequestStore() {
 	for(var i = 0; i < names.length; i++ ) {
 		//set up each item just like they responses bar is (and others)
 		//for some reason the clone approach i've used before isn't working hence all the html
-		var item = $("<div class='ui-widget-content ui-corner-all crest-saved-item' style='line-height:180%; padding-left: 5px; padding-top:4px; height: 26px; margin-bottom:5px;' title='double click me'></div>");
-		var itemButtons = $("<span style='float:right;padding-right:4px;'></span>");
+		var item = $("<div class='ui-widget-content ui-corner-all crest-saved-item' style='cursor: default;-webkit-user-select:none;padding-left: 4px; padding-top:7px; padding-bottom:7px;margin-bottom:5px;' title='double click me'></div>");
+		var itemName = $("<div></div>").append(names[i]);
+		var itemButtons = $("<div style='top:-3px;position:relative;float:left;padding-right:4px;'></div>");
 		
 		var loadButton = $("<button id='"+names[i]+"' style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button().click(
 				function() {
@@ -1157,7 +1161,8 @@ function displayRequestStore() {
 		
 		itemButtons.append(loadButton).append(deleteButton);
 		item.append( itemButtons );
-		item.append(names[i]);
+		item.append( itemName );
+		//item.append(names[i]);
 		
 		
 		//var li = $("<li class='ui-state-default'>"+names[i]+"</li>");
@@ -1223,6 +1228,55 @@ $(window).load(function() {
 	}
 });
 
+function setupTestButton() {
+
+	var ajaxContext = persistence.locateRequest("POST wadl summary").ajaxctx;
+	$("button#tester").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-disk'
+		}
+		}).click(
+		function(event) {
+			var saveInput = $("div#save-request-input-cloner").clone();
+			saveInput.attr("id","new-save-request-input-cloner");//ensures we only do things with the clone
+			var saveButton = $(this);
+
+
+			//saveInput.find("input#save-request-input-name").val(method+" "+uri);
+			//saveInput.find("input#save-request-input-name").val("Name me");
+			saveInput.find("input#save-request-input-uri").val(ajaxContext.uri);
+			saveInput.find("input#save-request-headers").val(ajaxContext.uri);
+			saveInput.find("input#save-request-put_post_entity").val(ajaxContext.reqEntity);
+			$(saveInput).dialog(
+					{
+						autoOpen: true,
+						modal: true,
+						width: 600,
+						height:500,
+						title: "Save this request for later use.",
+						buttons: { "Save" :
+									   function() {
+											saveButton.button("disable");
+											var req = new Request( 
+													saveInput.find("input#save-request-input-name").val(),
+													ajaxContext);
+											persistence.storeRequest(req);
+											saveInput.dialog("close");
+									   },
+									"Cancel":function() {
+										saveInput.dialog("close");
+									}
+								 }
+					}					
+			);
+
+			//saveInput.siblings(".ui-dialog-titlebar").hide();
+
+
+		});
+	
+}
 
 //http://stackoverflow.com/questions/985272/jquery-selecting-text-in-an-element-akin-to-highlighting-with-your-mouse
 jQuery.fn.selectText = function() {
@@ -1243,6 +1297,7 @@ jQuery.fn.selectText = function() {
     }
     return this;
 }
+
 
 //http://stackoverflow.com/questions/2010892/storing-objects-in-html5-localstorage
 //Storage.prototype.setObject = function(key, value) {

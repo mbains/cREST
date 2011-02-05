@@ -81,17 +81,17 @@
 				</tbody>
 				</table> 
 			</div>
-	<style>
+	<!--<style>
 		#selectable .ui-selecting { background: #FECA40; }
 		#selectable .ui-selected { background: #ACDD4A; color: black; }
 		#selectable { list-style-type: none; margin: 0; padding: 0; width: 100%; }
 		#selectable li { margin: 3px; padding: 0.4em; font-size: 1em; /*height: 18px;*/ }
-	</style><!-- suitcase-dialog-tabs -->
+	</style> suitcase-dialog-tabs -->
 	<div id="load-edit-tabs" style="display:none;">
 		<ul>
-			<li><a href="#load-request">Load Request</a></li>
+			<li><a href="#load-request">Saved Requests</a></li>
 			<li><a href="#uri-history">URI History</a></li>
-			<li><a href="#edit-request">Edit Request</a></li>
+			<li><a href="#header-history">Header History</a></li>
 			<button id="load-edit-tabs-close" style="float:right;">Close</button>
 		</ul>
 		<div id="load-request">
@@ -107,10 +107,10 @@
 			<div id="items"></div>
 		</div>
 		<div id="uri-history">
-			URI History tab data
+			URI History tab data.
 		</div>
-		<div id="edit-request">
-			Edit Request tab data
+		<div id="header-history">
+			Header History tab data.
 		</div>
 	</div>	
 			<div id="modify_headers" style="display:none; padding:10px; border-left:0px solid black;border-bottom:0px solid black;">
@@ -227,18 +227,24 @@
 		<textarea id="history" class="edit_history"></textarea>
 	</div>
 	<div id="save-request-input-cloner" style="display:none;">
-		Name: <input id="save-request-input-name" style="width: 90%;z-index: 100;"/>
-	</div>	
-
+		Name<br/><input id="save-request-input-name" style="width: 99%;z-index: 100;"/><br/>
+		<br/>URI<br/><input id="save-request-input-uri" style="width: 99%;z-index: 100;"/><br/>
+		<br/>Headers<br/><textarea id="save-request-headers" rows="10" style="padding-top:0px;"></textarea><br/>
+		<br/>Entity<br/><textarea id="save-request-put_post_entity" rows="10" style="padding-top:0px;"></textarea><br/>
+	</div>
+	
+	<button id="tester">test button</button>
 </div><!-- End demo -->
 
-		<!-- 
+		
 <form>
 
 </form>
 		<h2>TODOs/Features</h2>
 		<div>
 			<ol>
+				<li>check saved request names since i'm using them
+				as ids for elements, i assume a "" would break it.</li>
 				<li>
 					Time the ajax calls so you can tell how long the service call took w/out it
 					including all the time it takes cREST/jQuery to put it in the front end. Something 
@@ -252,7 +258,11 @@
 				<li>Sort saved requests by date</li>
 				<li>Put a tool tip explaining response codes</li>
 				<li>Hide responses toolbar when trash all is clicked</li>
-				
+				<li>Allow users to specify timeout?</li>
+				<li>Expland path param functionality. Left click will select like now, right click will
+					show a list of previously used path params?
+				</li>
+				<!-- 
 				<li>Get rid of spell checker</li>
 				<li>Show all request headers. Maybe the chrome ext api has a way to get at them?</li>
 				<li>Create html links when seen in response entity</li>
@@ -272,8 +282,8 @@
 						<li>Copy headers/response to clipboard</li>
 						<li>Save headers/response to file or localstorage?</li>
 					</ul>
-				</li>
+				</li> -->
 			</ol>
-		</div> -->
+		</div>
 	</body>
 </html>
