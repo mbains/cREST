@@ -1,3 +1,10 @@
+.debugborder {
+	border: 1px solid black;
+}
+.noselect {
+	-webkit-user-select:none;
+}
+
 header h1 {
  background: url(../icons/_32.png) no-repeat left;
  height: 30px;
@@ -58,7 +65,7 @@ header h1 {
 	vertical-align:middle;
 	z-index: 101;
 }
-pre,code {
+pre.responses,code.responses {
 	font-family: monospace;
 	font-size: 12px;
 	line-height: 100%;
@@ -67,6 +74,15 @@ pre,code {
 	outline-width:0;
 }
 
+
+pre.saved {
+	font-family: Verdana, Arial, sans-serif;
+	font-size: 13px;
+	padding: 0px;
+	line-height: 100%;
+	/*white-space:normal;*/
+	margin: 0px;
+}
 textarea {
 	width:99%;
 	font-family: monospace;

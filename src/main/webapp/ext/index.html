@@ -24,10 +24,13 @@
 <div id="screen-disable" style="display:none;position:absolute; opacity:0.3; z-index:1000; top:0; left:0; width:100%; height:100%; background-color:#000000;">
 </div>
 <div id="body">
-	<div id="requestBuilder" style="padding-bottom: 5px;">
+	<div id="requestBuilder" class="noselect" style="padding-bottom: 5px;">
 		<h3 id="requestBuilderHeader"class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
 	 		<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
 				<input type="checkbox" id="reset_request_builder" /><label class="mybuttontextsize" for="reset_request_builder">Reset</label>
+		 	</div>
+		 	<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
+				<input type="checkbox" id="req_store" /><label class="mybuttontextsize" for="req_store">Req Store</label>
 		 	</div>
 		   	<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
 				<input type="checkbox" id="modify_headers" /><label class="mybuttontextsize" for="modify_headers">Headers</label>
@@ -63,7 +66,7 @@
 					<tr>
 						<td width="100%">
 							<input id="uri_autocomplete" 
-								value="http://www.google.com"
+								value=""
 								hint="URI"
 								class="ui-autocomplete-input crest-ui-autocomplete-input" 
 								style="z-index: 100;"/>
@@ -201,10 +204,10 @@
 					<div class="selectButtons" id="reqSelectButtons" style="float:right;padding-top:10px">
 						<button id="selectReqHeaders" style="display:none">Headers</button>
 						<button id="selectReqEntity" style="display:none">Entity</button>
-					</div>
-					<pre id="reqHeadersPre" contenteditable="true" style="display:none; padding-bottom:10px;"><code id="reqHeadersCode"></code></pre>
+					</div><!-- if contenteditable != true, content will overflow bigtime.-->
+					<pre id="reqHeadersPre" class="responses" contenteditable="true" style="display:none; padding-bottom:10px;"><code id="reqHeadersCode" class="responses"></code></pre>
 	       			<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
-					<pre id="reqEntityPre" contenteditable="true" style="display:none;"><code id="reqEntityCode"></code></pre><br/>
+					<pre id="reqEntityPre" class="responses" contenteditable="true" style="display:none;"><code id="reqEntityCode" class="responses"></code></pre><br/>
 
 				</div>
 			</div>	
@@ -215,9 +218,9 @@
 						<button id="selectRespHeaders" style="display:none">Headers</button>
 						<button id="selectRespEntity" style="display:none">Entity</button>
 				</div>
-	       		<pre contenteditable="true" style="width:75%;padding-bottom:10px;" id="respHeadersPre"><code id="respHeadersCode"></code></pre>
-	       		<!-- span  class="responseDataHeader" id="entityHeader">Entity</span -->
-				<pre contenteditable="true" id="respEntityPre" class="position:relative"><code id="respEntityCode"></code></pre><br/>
+	       		<pre id="respHeadersPre" class="responses" contenteditable="true" style="width:75%;padding-bottom:10px;"><code id="respHeadersCode" class="responses"></code></pre>
+	       		<!-- class="position:relative" - that was below, not sure why-->
+				<pre id="respEntityPre" class="responses" contenteditable="true" ><code id="respEntityCode" class="responses"></code></pre><br/>
 			</div>
 		</div>
 	</div>
@@ -233,36 +236,55 @@
 		<br/>Entity<br/><textarea id="save-request-put_post_entity" rows="10" style="padding-top:0px;"></textarea><br/>
 	</div>
 	
-	<button id="tester">test button</button>
-</div><!-- End demo -->
+	<!-- This isn't used anywhere yet, but might come in handy sometime. -->
+	<div id="confirm-msg-cloner" style="display:none;" title="">
+		<p id="msg">
+			<span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>
+		</p>
+	</div>
 
-		
+	<div id="error-msg-cloner" class="ui-state-error ui-corner-all" style="display:none; padding-left: 3px;"> 
+		<p id="msg" style="margin:2px;">
+			<span class="ui-icon ui-icon-alert" style="float: left; margin-right: 5px;"></span>
+		</p>
+	</div>
+	<!--<button id="tester">test button</button>-->
+</div>
+		<!--what's that form for?
 <form>
 
 </form>
 		<h2>TODOs/Features</h2>
 		<div>
 			<ol>
-				<li>check saved request names since i'm using them
-				as ids for elements, i assume a "" would break it.</li>
+				<li>Style up the Req Store editor</li>
+				<li>allow something like "rs:" in URI or header bar which fileters only request store items</li>
+				<li>handle wrapping of response name better under responses section.</li>
+				<li>Use jQuery UI alerts instead of alert("f it");</li>
 				<li>
-					Time the ajax calls so you can tell how long the service call took w/out it
+					i'm looging this...Time the ajax calls so you can tell how long the service call took w/out it
 					including all the time it takes cREST/jQuery to put it in the front end. Something 
 					like...
 					Service response took {millis}. cREST/jQuery took {millis} to process the response.
 				</li>
 				<li>Duplicate saved request name! (allow overwrite after confirm)</li>
-				<li>In save screen, make sure text in the inputs aren't centered (shoud be able to see the beginning)</li>
 				<li>Get history in new tabs and remove pencil icon</li>
 				<li>Get saved request working with headers.</li>
-				<li>Sort saved requests by date</li>
+				
 				<li>Put a tool tip explaining response codes</li>
 				<li>Hide responses toolbar when trash all is clicked</li>
-				<li>Allow users to specify timeout?</li>
+				<li>CONFIG:  Allow users to specify timeout?</li>
 				<li>Expland path param functionality. Left click will select like now, right click will
 					show a list of previously used path params?
 				</li>
-				<!-- 
+				 
+				
+				
+				
+				
+				
+				
+				
 				<li>Get rid of spell checker</li>
 				<li>Show all request headers. Maybe the chrome ext api has a way to get at them?</li>
 				<li>Create html links when seen in response entity</li>
@@ -282,8 +304,16 @@
 						<li>Copy headers/response to clipboard</li>
 						<li>Save headers/response to file or localstorage?</li>
 					</ul>
-				</li> -->
+				</li> 
 			</ol>
+			<h2>Finished</h2>
+			<div>
+				<ol>
+					<li>check saved request names since i'm using them
+					as ids for elements, i assume a "" would break it.</li>
+					<li>Sort saved requests by date</li>
+				</ol>
+			</div>-->
 		</div>
 	</body>
 </html>
