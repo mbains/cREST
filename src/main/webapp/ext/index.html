@@ -24,7 +24,7 @@
 <div id="screen-disable" style="display:none;position:absolute; opacity:0.3; z-index:1000; top:0; left:0; width:100%; height:100%; background-color:#000000;">
 </div>
 <div id="body">
-	<div id="requestBuilder" class="noselect" style="padding-bottom: 5px;">
+	<div id="requestBuilder" style="padding-bottom: 5px;">
 		<h3 id="requestBuilderHeader"class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
 	 		<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
 				<input type="checkbox" id="reset_request_builder" /><label class="mybuttontextsize" for="reset_request_builder">Reset</label>
@@ -92,9 +92,9 @@
 	</style> suitcase-dialog-tabs -->
 	<div id="load-edit-tabs" style="display:none;">
 		<ul>
-			<li><a href="#load-request">Saved Requests</a></li>
-			<li><a href="#uri-history">URI History</a></li>
-			<li><a href="#header-history">Header History</a></li>
+			<li><a id="a-load-request" href="#load-request">Saved Requests</a></li>
+			<li><a id="a-uri-history" href="#uri-history">URI History - TODO Save</a></li>
+			<li><a id="a-header-history" href="#header-history">Header History - TODO Save</a></li>
 			<button id="load-edit-tabs-close" style="float:right;">Close</button>
 		</ul>
 		<div id="load-request">
@@ -109,11 +109,11 @@
 			</div>			
 			<div id="items"></div>
 		</div>
-		<div id="uri-history">
-			URI History tab data.
+		<div id="uri-history" style="padding:15px;padding-top:0px;padding-top:0px;">
+			<pre class="hist" contenteditable="true"><code id="uri-history"></code></pre>  		
 		</div>
 		<div id="header-history">
-			Header History tab data.
+			<pre class="hist" contenteditable="true"><code id="header-history"></code></pre>
 		</div>
 	</div>	
 			<div id="modify_headers" style="display:none; padding:10px; border-left:0px solid black;border-bottom:0px solid black;">

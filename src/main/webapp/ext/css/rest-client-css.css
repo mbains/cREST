@@ -74,7 +74,7 @@ pre.responses,code.responses {
 	outline-width:0;
 }
 
-
+/*need this anymore?*/
 pre.saved {
 	font-family: Verdana, Arial, sans-serif;
 	font-size: 13px;
@@ -83,6 +83,12 @@ pre.saved {
 	/*white-space:normal;*/
 	margin: 0px;
 }
+pre.hist {
+	outline-width:0;
+	border:1px solid #ccc;
+	border-bottom-color:#999;	
+}
+
 textarea {
 	width:99%;
 	font-family: monospace;

@@ -68,27 +68,65 @@ function Request(name,ajaxCtx) {
  * TODO: Let's get the uri and header history behind this object too. 
  */
 function Persistence() {
-	this.name = "reqSuitcase";
+	this.reqStoreKey = "reqSuitcase";
+	this.uriHistoryKey = "uriHistory";
+	this.headerHistoryKey = "headerHistory";
+	
+	this.listURIs = function() {
+		return storageObj(this.uriHistoryKey);
+	}
+	
+	this.storeURI = function(uri) {
+		var uriHist = storageObj(this.uriHistoryKey);
+		if( uriHist.length == 0 || $.inArray(uri,uriHist) == -1 ) {
+			if(log.isDebug) log.debug( "storeURI storing URI '" + uri + "'" );
+			uriHist.push(uri);
+			storageObj(this.uriHistoryKey,uriHist.sort());
+		} else if(log.isDebug) log.debug( "storeURI not storing URI '" + uri + "' cause it already exists" );
+	}
+	
+	this.listHeaders = function() {
+		return storageObj(this.headerHistoryKey);
+	}
+	
+	this.storeHeaders = function(reqHeaders) {
+		if(log.isDebug) log.debug( "storeHeaders called with headers:",reqHeaders );
+		var storeIt = false;
+		var headerHist = storageObj(this.headerHistoryKey);
+		for( var i = 0; i < reqHeaders.length; i++ ) {//for each header
+			var header = reqHeaders[i].name + ": " + reqHeaders[i].value;//create the header string
+			if( headerHist.length == 0 || $.inArray(header,headerHist) == -1 ) {//and see if we should push it
+				storeIt = true;
+				headerHist.push( header );
+			}
+		}
+		if(storeIt) {
+			if(log.isDebug) log.debug( "storeHeaders storing headers:",reqHeaders );
+			storageObj(this.headerHistoryKey,headerHist.sort());
+		} else if(log.isDebug) {
+			log.debug( "storeHeaders not storing headers:",reqHeaders );
+		}
+	}
+	
+	/**
+	 * All the request related methods. 
+	 */
 	
 	this.listRequests = function() {
-		return storageObj(this.name).items;
+		return storageObj(this.reqStoreKey).items;
 	}
 
 	this.listRequestNames = function() {
-		return storageObj(this.name+"Items");
+		return storageObj(this.reqStoreKey+"Items");
 	}
 	
 	this.listRequestNamesSortedByDate = function() {
-		return storageObj(this.name+"Items");
+		return storageObj(this.reqStoreKey+"Items");
 	}
-	/**
-	 * I was referring to store.items[i] even after sorting which was stored in in localStorage. So store.items[i]
-	 * was pointing to a different item after soring, returning the wrong obj. This was the problem I had 
-	 * with the 'simple' testing. 
-	 */
+
 	this.locateRequest = function(name,touch) {
 		if(log.isDebug)log.debug( "locateRequest('" + name + "')" );
-		var store = storageObj(this.name);
+		var store = storageObj(this.reqStoreKey);
 		for(var i = 0; i < store.items.length; i++ )
 			if( store.items[i].name == name) {
 				break;//now i points to the item.
@@ -114,7 +152,7 @@ function Persistence() {
 	this.storeRequest = function(request,store) {
 		var givenStore = true;
 		if(!store) {
-			var store = storageObj(this.name);
+			var store = storageObj(this.reqStoreKey);
 			givenStore = false
 		} 
 			
@@ -128,14 +166,14 @@ function Persistence() {
 	this.replaceRequest = function(request) {
 		if(log.isDebug) {log.debug( "replaceRequest called request object:",request );}
 		var replaceName = request.name;
-		var store = storageObj(this.name);
+		var store = storageObj(this.reqStoreKey);
 		var newStore = {"items":[]};
 		for(var i = 0; i < store.items.length; i++ )//create new store w/out the request
 			if( store.items[i].name != replaceName)
 				newStore.items.push(store.items[i]);
 	
-		if( store.items.length == newStore.items.length )//this should really never happen, unless i have a bug
-			log.warn("You called replace for name '" + replaceName + "' but it doesn't exist in the store! We'll store it anyhow.");
+		if( store.items.length == newStore.items.length ) 
+			log.warn("You called replace for name '" + replaceName + "' but it doesn't exist in the store. This could happen if someone chooses to update an existing request, then changes the name of it.");
 		
 		this.storeRequest(request,newStore);
 	}
@@ -143,7 +181,7 @@ function Persistence() {
 	
 	this.removeRequest = function(name) {
 		if(log.isDebug) {log.debug( "removeRequest called with name '" + name + "'" );}
-		var store = storageObj(this.name);
+		var store = storageObj(this.reqStoreKey);
 		var newStore = {"items":[]};
 		for(var i = 0; i < store.items.length; i++ )
 			if( store.items[i].name != name)
@@ -177,32 +215,27 @@ function Persistence() {
 			storeNames.push( store.items[i].name );
 		}
 		if(log.isDebug)log.debug( "storeRequestsAndNames called with store:", store );
-		var success = storageObj(this.name+"Items",storeNames) && storageObj(this.name,store);
+		var success = storageObj(this.reqStoreKey+"Items",storeNames) && storageObj(this.reqStoreKey,store);
 		return success;
 	}
 	
+	//TODO - test all the init stuff
 	this.init = function() {
-		var store = storageObj(this.name); 
-		if( store == null ) {
+		if(! $.isArray(storageObj(this.uriHistoryKey)) ) {
+			storage(this.uriHistoryKey,"[]");
+		}
+		
+		if(! $.isArray(storageObj(this.headerHistoryKey)) ) {
+			storage(this.headerHistoryKey,"[]");
+		}
+		var store = storageObj(this.reqStoreKey); 
+		if(!store) {
 			store = {"items":[]};
 		}
 		this.storeRequestsAndNames(store);
 		return this;
 	}
-	this.play = function() {
-		var store = storageObj(this.name);
-		for(var i = 0; i < store.items.length; i++ ) {
-			console.log(store.items[i].dateTouched);
-		}
-		return;
-		
-		var item = store.items[0];
-		for(var i = 0; i < 200; i++) {
-			var req = new Request(i+" "+item.name,item.ajaxctx);
-			store.items.push(req);
-		}
-		
-	}
+
 }
 
 function AjaxContext(method,uri,reqEntity,reqHeaders) {
@@ -224,10 +257,10 @@ function AjaxContext(method,uri,reqEntity,reqHeaders) {
 	};
 }
 
+//TODO - this should be a member of the AjaxContext Object
 function cloneAjaxCtx( ajaxCtx ) {
 	var headersCopy = [];
 
-	//dang, i forgot why i needed to create a copy of this array!
 	for (var i = 0; i < ajaxCtx.reqHeaders.length; i++) {
 		headersCopy.push({ name:ajaxCtx.reqHeaders[i].name,
 			value:ajaxCtx.reqHeaders[i].value});
@@ -358,26 +391,8 @@ function handleResponse( ajaxContext ) {
 		return;
 	}
 	if(xhr.status < 300 ) {
-		var storeIt = false;
-		var uriHist = storageObj("uriHistory");
-		if( uriHist.length == 0 || $.inArray(uri,uriHist) == -1 ) {
-			storeIt = true;
-			uriHist.push(uri);
-		}
-		if(storeIt)
-			storageObj("uriHistory",uriHist.sort());
-
-		storeIt = false;
-		var headerHist = storageObj("headerHistory");
-		for( var i = 0; i < reqHeaders.length; i++ ) {//for each user specified header
-			var header = reqHeaders[i].name + ": " + reqHeaders[i].value;//create the header string
-			if( headerHist.length == 0 || $.inArray(header,headerHist) == -1 ) {//and see if we should push it
-				storeIt = true;
-				headerHist.push( header );
-			}
-		}
-		if(storeIt)
-			storageObj("headerHistory",headerHist.sort());
+		persistence.storeURI(uri);
+		persistence.storeHeaders(reqHeaders);
 	}
 
 
@@ -566,7 +581,7 @@ function handleResponse( ajaxContext ) {
 				}).click(
 				function(event) {
 					var reqObj = new Request( new Date(), ajaxContext );
-					displayRequestEditor(reqObj);
+					displayRequestEditor(reqObj,true);
 				}).css("display", "");
 		
 		//do the select buttons.
@@ -892,14 +907,6 @@ var storeTabs;
 
 
 function init(){
-	//to make things easier, let's just ensure there's always a uriHistory and
-	//headerHistory even if the arrays are empty.
-	if(! $.isArray(storageObj("uriHistory")) ) {
-		storage("uriHistory","[]");
-	}
-	if(! $.isArray(storageObj("headerHistory")) ) {
-		storage("headerHistory","[]");
-	}
 
 	//setup uri fields...
 	$("div#submit_request_buttonset").buttonset();
@@ -920,7 +927,7 @@ function init(){
 	 */
 	uriAc = $("#uri_autocomplete").autocomplete( {
 			source: function(req, resp){
-					var uris = storageObj("uriHistory");
+					var uris = persistence.listURIs();
 					//{ label: lab, value: val };
 					var names = persistence.listRequestNames();
 					var nameObjs = [];
@@ -1011,6 +1018,7 @@ function init(){
 			primary: 'ui-icon-pencil'
 		}
 	}).click(function() {
+		//TODO - this needs to go away
 		editHistory( "uriHistory", "Edit URI History" );
 	});//click
 
@@ -1028,11 +1036,11 @@ function init(){
 	headerAc = $("#header-autocomplete").autocomplete( {
 		source: function(req, resp){ 
 			var alreadySelected = headersTa.textarea.val();
-			var headerHist = storageObj("headerHistory");
-
+			var headerHist = persistence.listHeaders();
+			
 			//remove items that are already selected.
 			var filteredHeaderHist = $.map(headerHist, function(item) {
-				if( alreadySelected.indexOf(item) != -1 )//must have already been selected
+				if( alreadySelected.indexOf(item) != -1 )
 					return;
 
 				return item;//not already selected.
@@ -1243,10 +1251,8 @@ function displayRequestStore() {
 	var savedReqs = storeTabs.find("#load-request");
 	var names = persistence.listRequestNames();
 	var itemList = savedReqs.find( "div#items" );
-	if(log.isDebug)log.debug("before empty");
 	itemList.empty();//remove everything then build the list back up...
-	if(log.isDebug)log.debug("after empty");
-	for(var i = 0; i < names.length; i++ ) {
+	for(var i = 0; i < names.length; i++ ) {//saved request items...
 		//set up each item just like they responses bar is (and others)
 		//for some reason the clone approach i've used before isn't working hence all the html
 		var item = $("<div class='ui-widget-content ui-corner-all noselect' style='cursor: default;padding-left: 2px; padding-top:7px; padding-bottom:7px;margin-bottom:5px;'></div>");
@@ -1269,6 +1275,11 @@ function displayRequestStore() {
 					loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
 				});
 		
+		var editButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button().click(
+				function() {
+					displayRequestEditor($(this).parent().parent().find("input#item-name").val(),false);
+				});
+		
 		var deleteButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Delete</button>").button().click(
 				function() {
 					var success = persistence.removeRequest($(this).parent().parent().find("input#item-name").val());
@@ -1279,7 +1290,7 @@ function displayRequestStore() {
 					$(this).parent().parent().remove();
 				});
 		
-		itemButtons.append(runButton).append(loadButton).append(deleteButton);
+		itemButtons.append(runButton).append(loadButton).append(editButton).append(deleteButton);
 		item.append( itemButtons );
 		item.append( itemName );
 
@@ -1294,9 +1305,12 @@ function displayRequestStore() {
 		  });
 		
 		itemList.append(item);
-	}//item loop	
-	if(log.isDebug)log.debug("after loop");
-	
+	}//saved request item loop	
+
+	var uris = persistence.listURIs();
+	var headers = persistence.listHeaders();
+	$("code#uri-history").empty().text(toLines(uris));
+	$("code#header-history").empty().text(toLines(headers));
 	//display tabs first so disable div see it's height
 	storeTabs = $("#load-edit-tabs").css( "display", "block" );
 	var oneAbove = enableDisableDiv();
@@ -1305,6 +1319,15 @@ function displayRequestStore() {
 	//this is pretty slow and not cause of localStorage, jQuery is doing a lot up there when there's
 	//a lot of items. I'll figure out a better way to handle this later, for now it works.
 	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis.");
+}
+
+
+function toLines(strArr) {
+	var txt = "";
+	for(var i = 0; i < strArr.length; i++) {
+		txt = txt+strArr[i]+"\n";
+	}
+	return txt;
 }
 
 function toUniqueArray(a){
@@ -1329,21 +1352,6 @@ $(window).load(function() {
 			  dataType: "script",
 			  async: false
 			});
-
-		var uriHistory = storageObj("uriHistory");
-		var headerHistory = storageObj("headerHistory");
-
-
-		uriHistory = uriHistory.concat(devUriHistory);
-		headerHistory = headerHistory.concat(devHeaderHistory);
-
-
-		toUniqueArray( uriHistory );
-		toUniqueArray( headerHistory );
-
-
-		storageObj("uriHistory",uriHistory);
-		storageObj("headerHistory",headerHistory);
 	}
 });
 
@@ -1354,13 +1362,44 @@ function formatHeadersForTextarea( headersObj ) {
 	}
 	return headers;
 }
-
-function displayRequestEditor(req) {
-	(function(closuredReq){//i need to reference the req in the save function (for method) so this keeps the req in scope... guess i could put in in a hidden field.
-		if(log.isDebug)log.debug( "displayRequestEditor invoked with Request named '" + closuredReq.name + "'. Here's the whole object", closuredReq );
+/**
+ * We'll either display the editor for saving new requests, or editing 
+ * old ones. if isNew == true, well, let's just say we're not editing
+ * an old one.
+ * @param req - either a string or Request object. If string, then we'll look
+ * up the Request obj from persistence.
+ * @param isNew - indicates weather the request is new one to save, or if we're
+ * editing an existing saved request. If editing, we don't need to warn the user
+ * for duplication name, we'll just overrite. For new ones, we should warn the
+ * user.
+ */
+function displayRequestEditor(req,isNew) {
+	if( typeof req == "string" ) {//req must be a name.
+		var name = req;
+		req = persistence.locateRequest(req, false);
+		if(log.isDebug)log.debug("displayRequestEditor looked up request object for name '"+name+"' and found:",req);
+	}
+	(function(closuredReq,isNew){//i need to reference the req in the save function (for method) so this keeps the req in scope... guess i could put in in a hidden field.
+		var isEdit = !isNew;//just to be explicit... if it's not new, it must be an edit to an exiting one.
+		if(log.isDebug)log.debug( "displayRequestEditor invoked with Request named '" + closuredReq.name + "' and isNew = "+isNew+". Here's the whole object", closuredReq );
 		var saveInput = $("div#save-request-input-cloner").clone();
 		saveInput.attr("id","new-save-request-input-cloner");//ensures we only do things with the clone
-		var saveButton = $(this);
+		
+		function createRequestFromEditor() {
+			var name = saveInput.find("input#save-request-input-name").val();
+			var uri = saveInput.find("input#save-request-input-uri").val();
+			var reqHeaders = $.trim(saveInput.find("textarea#save-request-headers").val());
+			var reqEntity = saveInput.find("textarea#save-request-put_post_entity").val();
+			
+			var newCtx = new AjaxContext(
+					closuredReq.ajaxctx.method,
+					uri, reqEntity, textareaHeadersToObject(reqHeaders));
+			var newReq = new Request( 
+					name,
+					newCtx);
+			
+			return newReq;
+		}
 	
 	
 		//saveInput.find("input#save-request-input-name").val(method+" "+uri);
@@ -1379,36 +1418,30 @@ function displayRequestEditor(req) {
 								
 								   function() {
 										var name = saveInput.find("input#save-request-input-name").val();
-										var uri = saveInput.find("input#save-request-input-uri").val();
-										var reqHeaders = $.trim(saveInput.find("textarea#save-request-headers").val());
-										var reqEntity = saveInput.find("textarea#save-request-put_post_entity").val();
+
 										
 										var btnArea = $($(this).parent().find("button").parent());
 										var saveSpan = $(btnArea.find("button")[0]).find("span");
 										var cancelSpan = $(btnArea.find("button")[1]).find("span");
 										//OVER WRITE NEXT!
 										//TODO - let's change this to persistence.requestExists or something like that
-										if( persistence.locateRequest( name ) ) {//Show warning is exists. NOTE: not touching
-											if(log.isDebug)log.debug( "Request already exists with name '" +name+ "'. I'm gonna present a warning message and repurpose the buttons to confirm overwrite" );
+										if( isNew && persistence.locateRequest( name ) ) {//Show warning is exists and we're saving a new Request. NOTE: not touching
+											if(log.isDebug)log.debug( "NEW Request already exists with name '" +name+ "'. I'm gonna present a warning message and repurpose the buttons to confirm overwrite" );
 											var errmsg = $("div#error-msg-cloner").clone().attr("id","new-error-msg-cloner");
 											errmsg.find("p#msg").append("An item with that name exists, would you like to overwrite it?&nbsp;&nbsp;");
 											saveSpan.text("Yes");
 											cancelSpan.text("No");
 											btnArea.prepend(errmsg.css("float","left").css("margin","6px").css("border","1px solid black"));
 											errmsg.css("display","")
-										} else if(saveSpan.text()=="Yes") {//must mean they want to overwrite!
-											if(log.isDebug) log.debug( "User chose to overwrit existing request with name '" +name+ "'" );
-											persistence.replaceRequest(closuredReq);
+										} else if(saveSpan.text()=="Yes" || isEdit) {//must mean they want to overwrite, user can overwrite by editing an existing one or saving a new one with the same name of an existing one.
+											if(log.isDebug) log.debug( "User chose to overwrite or update existing request with name '" +name+ "' and isNew = " + isNew );
+											var req = createRequestFromEditor();
+											persistence.replaceRequest(req);
 											saveInput.remove();
 											
 										} else { //totally new name so just save it.
 											if(log.isDebug)log.debug( "Storing new request with name '" +name+ "'" );
-											var newCtx = new AjaxContext(
-													closuredReq.ajaxctx.method,
-													uri, reqEntity, textareaHeadersToObject(reqHeaders));
-											var newReq = new Request( 
-													name,
-													newCtx);
+											var newReq = createRequestFromEditor();
 											persistence.storeRequest(newReq);
 											saveInput.remove();
 										}
@@ -1431,7 +1464,7 @@ function displayRequestEditor(req) {
 							 }
 				}					
 		);
-	})(req);
+	})(req,isNew);
 	//saveInput.siblings(".ui-dialog-titlebar").hide();
 }
 function setupTestButton() {
