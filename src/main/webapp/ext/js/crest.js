@@ -1022,13 +1022,6 @@ function init(){
 		editHistory( "uriHistory", "Edit URI History" );
 	});//click
 
-	$("button#load_request_scenario").button({
-		text: false,
-		icons: {
-			primary: 'ui-icon-suitcase'
-		}
-	}).click(function() {displayRequestStore()});//click
-
 
 	//setup header fields...
 	$("div#header-autocomplete_buttonset").buttonset();
@@ -1092,15 +1085,6 @@ function init(){
 				return false;
 			}
 	  );
-
-	$("button#load_header_scenario").button({
-		text: false,
-		icons: {
-			primary: 'ui-icon-suitcase'
-		}
-	}).click(function() {
-		alert( "Load Header Scenario clicked" );
-	});//click
 
 	$('button#edit_header_history').button({
 		text: false,
@@ -1275,7 +1259,12 @@ function displayRequestStore() {
 					$("#submit_request").trigger("click");
 				});
 		
-		var loadButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button().click(
+		var loadButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button({
+			text: false,
+			icons: {
+				primary: 'ui-icon-folder-open'
+			}
+		}).click(
 				function() {
 					loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
 				});
