@@ -159,7 +159,7 @@ function Persistence() {
 		
 		request.dateTouched = new Date();
 		store.items.push(request);
-		if(log.isDebug)log.debug( "storeRequest called "+(givenStore)?" WITH ":" WITHOUT"+" a store and request:", request );
+		if(log.isDebug)log.debug( "storeRequest called "+((givenStore)?" WITH":" WITHOUT")+" a store and request:", request );
 		return this.storeRequestsAndNames(store);
 	}
 	
@@ -1255,7 +1255,7 @@ function displayRequestStore() {
 	for(var i = 0; i < names.length; i++ ) {//saved request items...
 		//set up each item just like they responses bar is (and others)
 		//for some reason the clone approach i've used before isn't working hence all the html
-		var item = $("<div class='ui-widget-content ui-corner-all noselect' style='cursor: default;padding-left: 2px; padding-top:7px; padding-bottom:7px;margin-bottom:5px;'></div>");
+		var item = $("<div class='ui-widget-content ui-corner-all' style='cursor: default;padding-left: 2px; padding-top:7px; padding-bottom:7px;margin-bottom:5px;'></div>");
 		//if(log.isDebug)log.debug( "adding name '" +names[i]+ "' to the request store" );
 		
 		var itemName = $("<div><pre class='saved' /></div>").find("pre").text(names[i]);
@@ -1264,7 +1264,12 @@ function displayRequestStore() {
 		itemName.append(hiddenName);
 		var itemButtons = $("<div style='top:-4px;position:relative;float:left;padding-right:4px;'></div>");
 		
-		var runButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Run</button>").button().click(
+		var runButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>load in Request Builder and submit request</button>").button({
+			text: false,
+			icons: {
+				primary: 'ui-icon-play'
+			}
+		}).click(
 				function() {
 					loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
 					$("#submit_request").trigger("click");
@@ -1275,12 +1280,22 @@ function displayRequestStore() {
 					loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
 				});
 		
-		var editButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button().click(
+		var editButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button({
+			text: false,
+			icons: {
+				primary: 'ui-icon-pencil'
+			}
+		}).click(
 				function() {
 					displayRequestEditor($(this).parent().parent().find("input#item-name").val(),false);
 				});
 		
-		var deleteButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Delete</button>").button().click(
+		var deleteButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Trash</button>").button({
+			text: false,
+			icons: {
+				primary: 'ui-icon-trash'
+			}
+		}).click(
 				function() {
 					var success = persistence.removeRequest($(this).parent().parent().find("input#item-name").val());
 					if(!success) {
@@ -1386,7 +1401,7 @@ function displayRequestEditor(req,isNew) {
 		saveInput.attr("id","new-save-request-input-cloner");//ensures we only do things with the clone
 		
 		function createRequestFromEditor() {
-			var name = saveInput.find("input#save-request-input-name").val();
+			var name = $.trim(saveInput.find("input#save-request-input-name").val());
 			var uri = saveInput.find("input#save-request-input-uri").val();
 			var reqHeaders = $.trim(saveInput.find("textarea#save-request-headers").val());
 			var reqEntity = saveInput.find("textarea#save-request-put_post_entity").val();
@@ -1417,15 +1432,14 @@ function displayRequestEditor(req,isNew) {
 					buttons: { "Save" :
 								
 								   function() {
-										var name = saveInput.find("input#save-request-input-name").val();
+										var name = createRequestFromEditor().name;//ensure trim is applied to name for save, and in this case name for further usage
 
 										
 										var btnArea = $($(this).parent().find("button").parent());
 										var saveSpan = $(btnArea.find("button")[0]).find("span");
 										var cancelSpan = $(btnArea.find("button")[1]).find("span");
-										//OVER WRITE NEXT!
-										//TODO - let's change this to persistence.requestExists or something like that
-										if( isNew && persistence.locateRequest( name ) ) {//Show warning is exists and we're saving a new Request. NOTE: not touching
+										//if (it's a new request being save) and if (if the request exists) and if (no duplicate warning has been seen), show the warning
+										if( isNew && persistence.locateRequest( name ) && saveSpan.text()=="Save" ) {
 											if(log.isDebug)log.debug( "NEW Request already exists with name '" +name+ "'. I'm gonna present a warning message and repurpose the buttons to confirm overwrite" );
 											var errmsg = $("div#error-msg-cloner").clone().attr("id","new-error-msg-cloner");
 											errmsg.find("p#msg").append("An item with that name exists, would you like to overwrite it?&nbsp;&nbsp;");
@@ -1433,12 +1447,12 @@ function displayRequestEditor(req,isNew) {
 											cancelSpan.text("No");
 											btnArea.prepend(errmsg.css("float","left").css("margin","6px").css("border","1px solid black"));
 											errmsg.css("display","")
-										} else if(saveSpan.text()=="Yes" || isEdit) {//must mean they want to overwrite, user can overwrite by editing an existing one or saving a new one with the same name of an existing one.
+										//else the user must want to overwrite, or is editing an existing request (also overwrite)
+										} else if(saveSpan.text()=="Yes" || isEdit) {
 											if(log.isDebug) log.debug( "User chose to overwrite or update existing request with name '" +name+ "' and isNew = " + isNew );
 											var req = createRequestFromEditor();
 											persistence.replaceRequest(req);
 											saveInput.remove();
-											
 										} else { //totally new name so just save it.
 											if(log.isDebug)log.debug( "Storing new request with name '" +name+ "'" );
 											var newReq = createRequestFromEditor();
