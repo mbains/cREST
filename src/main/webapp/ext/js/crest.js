@@ -78,7 +78,7 @@ function Persistence() {
 	
 	this.storeURI = function(uri) {
 		var uriHist = storageObj(this.uriHistoryKey);
-		if( uriHist.length == 0 || $.inArray(uri,uriHist) == -1 ) {
+		if( $.inArray(uri,uriHist) == -1 ) {
 			if(log.isDebug) log.debug( "storeURI storing URI '" + uri + "'" );
 			uriHist.push(uri);
 			storageObj(this.uriHistoryKey,uriHist.sort());
@@ -89,12 +89,24 @@ function Persistence() {
 		return storageObj(this.headerHistoryKey);
 	}
 	
-	this.storeHeaders = function(reqHeaders) {
+	/**
+	 * Replace all or append header history.
+	 */
+	this.storeHeaders = function(reqHeaders,replaceAll) {
 		if(log.isDebug) log.debug( "storeHeaders called with headers:",reqHeaders );
 		var storeIt = false;
-		var headerHist = storageObj(this.headerHistoryKey);
+		if(replaceAll)
+			var headerHist = new Array();
+		else
+			var headerHist = storageObj(this.headerHistoryKey);
+		
 		for( var i = 0; i < reqHeaders.length; i++ ) {//for each header
-			var header = reqHeaders[i].name + ": " + reqHeaders[i].value;//create the header string
+			//console.log("type of in storeHeaders: " + (typeof reqHeaders[i] == "string"));
+			if(typeof reqHeaders[i] == "string")
+				var header = reqHeaders[i];
+			else
+				var header = reqHeaders[i].name + ": " + reqHeaders[i].value;//create the header string
+			
 			if( headerHist.length == 0 || $.inArray(header,headerHist) == -1 ) {//and see if we should push it
 				storeIt = true;
 				headerHist.push( header );
@@ -277,7 +289,11 @@ function cloneAjaxCtx( ajaxCtx ) {
 
 	return newCtx;
 }
-
+/**
+ * Create array of header object from text
+ * @param headerText
+ * @returns {Array}
+ */
 function textareaHeadersToObject(headerText) {
 	var reqHeaders = [];
 	if( headerText != "" ) {
@@ -1026,8 +1042,8 @@ function init(){
 			primary: 'ui-icon-pencil'
 		}
 	}).click(function() {
-		//TODO - this needs to go away
-		editHistory( "uriHistory", "Edit URI History" );
+		storeTabs.find("a#edit-uri-history-tab").trigger("click");
+		displayRequestStore();
 	});//click
 
 
@@ -1100,7 +1116,8 @@ function init(){
 			primary: 'ui-icon-pencil'
 		}
 	}).click(function() {
-		editHistory( "headerHistory", "Edit Header History" );
+		storeTabs.find("a#edit-header-history-tab").trigger("click");
+		displayRequestStore();
 	});//click
 
 	$("input#reset_request_builder").button().click(function() {
@@ -1120,6 +1137,9 @@ function init(){
 		}
 	});
 	$("input#req_store").button().click(function() {
+		storeTabs.find("a#load-request-tab").trigger("click");
+		storeTabs.find("button#load-edit-tabs-save").css("display","none");
+		
 		displayRequestStore();
 		if($(this).is(":checked")) {
 			$(this).attr('checked', false).trigger("change").trigger("refresh");
@@ -1200,18 +1220,43 @@ function init(){
 	putPostEntityTa = $("textarea#put_post_entity");
 
 	storeTabs = $("#load-edit-tabs");
+	
 	storeTabs.tabs().bind("tabsselect", function(event, ui) {
+		var saveButton = $(this).find("button#load-edit-tabs-save");
+		
+		if(ui.tab.id == "load-request-tab")
+			saveButton.css("display","none");
+		else
+			saveButton.css("display","");
+		
 		enableDisableDiv();//adjust the disable div if height is different for tab.
-		console.log(ui.tab.id);
 	});
 	storeTabs.find("button#load-edit-tabs-close").button({
 		text: false,
 		icons: {
 			primary: 'ui-icon-close'
 		}
-	}).click(function() { closeRequestStore() });
+	}).click( function() { 
+		closeRequestStore() 
+	});
+	
+	
 	storeTabs.find("button#load-edit-tabs-save").button().click(function() {
-		alert( "save clicked!!" );
+		//id of selected tab
+		var id = storeTabs.find("li.ui-tabs-selected").attr("id");
+		if(id=="edit-uri-history-tab") {
+			var uriHist = storeTabs.find("code#uri-history").text()
+			uriHist = toArrayFromLines(uriHist);
+			console.log( "finish uri hist store..." );
+		} else if(id=="edit-header-history-tab") {
+			var headerHist = storeTabs.find("code#header-history").text()
+			
+			console.log( "storing headers..." );
+			console.log(headerHist);
+			headerHist = toArrayFromLines(headerHist);
+			console.log(headerHist);
+			persistence.storeHeaders(headerHist,true);
+		} else log.error( "Save was clicked on a tab we're not handling. The id tab id is '" +id+ "'" );
 	});
 }
 var disableDiv;
@@ -1325,10 +1370,32 @@ function displayRequestStore() {
 
 	var uris = persistence.listURIs();
 	var headers = persistence.listHeaders();
-	$("code#uri-history").empty().text(toLines(uris));
-	$("code#header-history").empty().text(toLines(headers));
+	console.log("empty uri");
+	$("code#uri-history").empty();
+	
+	$("code#uri-history").text(toLines(uris));
+
+	console.log( "list headers..." );
+	console.log(headers);
+	console.log("current text:");
+	console.log($("code#header-history"));
+	console.log("empty headers");
+	$("code#header-history").text("");
+	console.log("text after empty: ");
+	console.log($("code#header-history").text());
+	
+	console.log( "calling to lines with: " );
+	console.log(headers);
+	var tolines = toLines(headers);
+	console.log( "toLines: " );
+	console.log( tolines );
+	
+	console.log($("code#header-history"));
+	$("code#header-history").text(tolines);
+	console.log( "the gui text:" );
+	console.log( $("code#header-history").text() );
 	//display tabs first so disable div see it's height
-	storeTabs = $("#load-edit-tabs").css( "display", "block" );
+	storeTabs.css( "display", "block" );
 	
 
 	var oneAbove = enableDisableDiv();
@@ -1338,6 +1405,24 @@ function displayRequestStore() {
 	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis.");
 }
 
+function toArrayFromLines(lines) {
+	lines = lines.split("\n");
+	//alert(hist);
+	var newlines = $.map( lines, function(item) {
+		item = $.trim(item);
+		if( item != "")
+			return item;
+	});
+	return newlines;
+} 
+
+function formatHeadersForTextarea( headersObj ) {
+	var headers = "";
+	for(var i = 0; i < headersObj.length; i++) {
+		headers = headers+headersObj[i].name+": "+headersObj[i].value+"\n";
+	}
+	return headers;
+}
 
 function toLines(strArr) {
 	var txt = "";
@@ -1372,13 +1457,6 @@ $(window).load(function() {
 	}
 });
 
-function formatHeadersForTextarea( headersObj ) {
-	var headers = "";
-	for(var i = 0; i < headersObj.length; i++) {
-		headers = headers+headersObj[i].name+": "+headersObj[i].value+"\n";
-	}
-	return headers;
-}
 /**
  * We'll either display the editor for saving new requests, or editing 
  * old ones. if isNew == true, well, let's just say we're not editing
