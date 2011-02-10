@@ -84,18 +84,17 @@
 				</tbody>
 				</table> 
 			</div>
-	<!--<style>
-		#selectable .ui-selecting { background: #FECA40; }
-		#selectable .ui-selected { background: #ACDD4A; color: black; }
-		#selectable { list-style-type: none; margin: 0; padding: 0; width: 100%; }
-		#selectable li { margin: 3px; padding: 0.4em; font-size: 1em; /*height: 18px;*/ }
-	</style> suitcase-dialog-tabs -->
+	<style>
+		.ui-tabs-panel { height: 80%; overflow: auto; } 
+	</style>
 	<div id="load-edit-tabs" style="display:none;">
 		<ul>
 			<li><a id="a-load-request" href="#load-request">Saved Requests</a></li>
 			<li><a id="a-uri-history" href="#uri-history">URI History</a></li>
 			<li><a id="a-header-history" href="#header-history">Header History</a></li>
+			
 			<button id="load-edit-tabs-close" style="float:right;">Close</button>
+			<button id="load-edit-tabs-save" style="float:right;">Save</button>
 		</ul>
 		<div id="load-request">
 			<div id="saved-requests-load-options">
@@ -108,11 +107,11 @@
 				<label for="load_entity">Entity</label><br/><br/>
 			</div>			
 			<div id="items"></div>
-		</div>
-		<div id="uri-history" style="padding:15px;padding-top:0px;padding-top:0px;">
+		</div><!-- height:300px;overflow:scroll -->
+		<div id="uri-history" style=";padding:20px;padding-top:0px;padding-top:5px;">
 			<pre class="hist" contenteditable="true"><code id="uri-history"></code></pre>  		
 		</div>
-		<div id="header-history">
+		<div id="header-history" style="padding:20px;padding-top:0px;padding-top:5px;">
 			<pre class="hist" contenteditable="true"><code id="header-history"></code></pre>
 		</div>
 	</div>	

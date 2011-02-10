@@ -84,6 +84,8 @@ pre.saved {
 	margin: 0px;
 }
 pre.hist {
+	white-space:pre-wrap;
+	padding:5px;
 	outline-width:0;
 	border:1px solid #ccc;
 	border-bottom-color:#999;	

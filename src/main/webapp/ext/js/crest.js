@@ -200,15 +200,7 @@ function Persistence() {
 	this.storeRequestsAndNames = function(store) {
 		//by default we'll always put the newest ones first, i should move this code out of here 
 		//so that we can sort by name, uri, etc...
-		store.items.sort(function (a, b) {
-			var aDate = new Date(a.dateTouched);
-			var bDate = new Date(b.dateTouched);
-			if( bDate>aDate )
-				return 1;
-			if( bDate<aDate )
-				return -1
-			return 0;
-		});
+		store.items.sort(this.sortRequestsByName);
 		
 		var storeNames = new Array();
 		for(var i = 0; i < store.items.length; i++ ) {	
@@ -217,6 +209,22 @@ function Persistence() {
 		if(log.isDebug)log.debug( "storeRequestsAndNames called with store:", store );
 		var success = storageObj(this.reqStoreKey+"Items",storeNames) && storageObj(this.reqStoreKey,store);
 		return success;
+	}
+	this.sortRequestsByName = function (a, b) {
+		if( a.name>b.name )
+			return 1;
+		if( a.name<b.name )
+			return -1
+		return 0;
+	}
+	this.sortRequestsByDateTouched = function (a, b) {
+		var aDate = new Date(a.dateTouched);
+		var bDate = new Date(b.dateTouched);
+		if( bDate>aDate )
+			return 1;
+		if( bDate<aDate )
+			return -1
+		return 0;
 	}
 	
 	//TODO - test all the init stuff
@@ -1192,15 +1200,19 @@ function init(){
 	putPostEntityTa = $("textarea#put_post_entity");
 
 	storeTabs = $("#load-edit-tabs");
-	storeTabs.tabs();
+	storeTabs.tabs().bind("tabsselect", function(event, ui) {
+		enableDisableDiv();//adjust the disable div if height is different for tab.
+		console.log(ui.tab.id);
+	});
 	storeTabs.find("button#load-edit-tabs-close").button({
 		text: false,
 		icons: {
 			primary: 'ui-icon-close'
 		}
 	}).click(function() { closeRequestStore() });
-	
-	//setupTestButton();
+	storeTabs.find("button#load-edit-tabs-save").button().click(function() {
+		alert( "save clicked!!" );
+	});
 }
 var disableDiv;
 function enableDisableDiv() {
@@ -1262,7 +1274,7 @@ function displayRequestStore() {
 		var loadButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button({
 			text: false,
 			icons: {
-				primary: 'ui-icon-folder-open'
+				primary: "ui-icon-arrowreturnthick-1-n"//'ui-icon-folder-open'
 			}
 		}).click(
 				function() {
@@ -1317,9 +1329,10 @@ function displayRequestStore() {
 	$("code#header-history").empty().text(toLines(headers));
 	//display tabs first so disable div see it's height
 	storeTabs = $("#load-edit-tabs").css( "display", "block" );
+	
+
 	var oneAbove = enableDisableDiv();
 	storeTabs.css("z-index",oneAbove);
-	
 	//this is pretty slow and not cause of localStorage, jQuery is doing a lot up there when there's
 	//a lot of items. I'll figure out a better way to handle this later, for now it works.
 	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis.");
