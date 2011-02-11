@@ -1252,31 +1252,77 @@ function init(){
 		icons: {
 			primary: 'ui-icon-close'
 		}
-	}).click( function() { 
-		closeRequestStore() 
+	}).click( function(e) {
+		console.log("here");
+		
+		var uriChange = endsWithStarExp.test(storeTabs.find("a#edit-uri-history-tab").text()); 
+		var headerChange = endsWithStarExp.test(storeTabs.find("a#edit-header-history-tab").text()); 
+			
+		
+		if(uriChange || headerChange ) {
+			
+			if(uriChange && headerChange )
+				var msg = "URI history and header history have been modified. Save changes?";
+			else if (uriChange)
+				var msg = "URI history has been modified. Save changes?";
+			else
+				var msg = "Header history has been modified. Save changes?";
+			
+			//wierd, w/out the clone, the dialog will only show once on close
+			storeTabs.find( "div#req-store-save-confirm" ).clone().append(msg).dialog({
+				resizable: false,
+				height:140,
+				modal: true,
+				buttons: {
+					"Yes": function() {
+						if(uriChange)
+							storeTabs.find("button#uri-history-save").trigger("click");
+							
+						if(headerChange)
+							storeTabs.find("button#header-history-save").trigger("click");
+						
+						$( this ).dialog( "close" );
+						closeRequestStore();
+					},
+					"No": function() {
+						$( this ).dialog( "close" );
+						closeRequestStore();
+					}
+				}
+			});
+			
+		} else
+			closeRequestStore() 
 	});
 	
+	storeTabs.find("button#uri-history-save").button().click(function() {
+		var ta = storeTabs.find("textarea#uri-history");
+		var uriHist = ta.val()
+		uriHist = toArrayFromLines(uriHist);
+		var replaceAll = true;
+		persistence.storeURIs(uriHist,replaceAll);
+		removeStarFromText(storeTabs.find("a#edit-uri-history-tab"));
+		//get ready for next change now
+		bindReqStoreTextareaEvents(ta);
+	});
 	
-	storeTabs.find("button#load-edit-tabs-save").button().click(function() {
-		//id of selected tab
-		var id = storeTabs.find("li.ui-tabs-selected").attr("id");
-		if(id=="edit-uri-history-tab") {
-			var uriHist = storeTabs.find("textarea#uri-history").val()
-			uriHist = toArrayFromLines(uriHist);
-			var replaceAll = true;
-			persistence.storeURIs(uriHist,replaceAll);
-		} else if(id=="edit-header-history-tab") {
-			var headerHist = storeTabs.find("textarea#header-history").val()
-			console.log( "storing headers with text area..." );
-			console.log( "storing headers with text area..." );
-			console.log(headerHist);
-			headerHist = toArrayFromLines(headerHist);
-			console.log(headerHist);
-			var replaceAll = true;
-			persistence.storeHeaders(headerHist,replaceAll);
-		} else log.error( "Save was clicked on a tab we're not handling. The id tab id is '" +id+ "'" );
+	storeTabs.find("button#header-history-save").button().click(function() {
+		var ta = storeTabs.find("textarea#header-history");
+		var headerHist = ta.val()
+		headerHist = toArrayFromLines(headerHist);
+		var replaceAll = true;
+		persistence.storeHeaders(headerHist,replaceAll);
+		removeStarFromText(storeTabs.find("a#edit-header-history-tab"));
+		bindReqStoreTextareaEvents(ta);
 	});
 }
+var gStarReplaceExp = /\*/g;
+var endsWithStarExp = /\*$/;
+
+function removeStarFromText(jqObj) {
+	jqObj.text(jqObj.text().replace(gStarReplaceExp,""));
+}
+
 var disableDiv;
 function enableDisableDiv() {
 	if(!disableDiv)
@@ -1385,19 +1431,19 @@ function displayRequestStore() {
 		
 		itemList.append(item);
 	}//saved request item loop	
-
+	
+	storeTabs.find("a#edit-uri-history-tab").text( "URI History" );//removes * if there
 	var uris = persistence.listURIs();
-	var headers = persistence.listHeaders();
-
-	var uriTA = $("textarea#uri-history");
-	uriTA.val("");
-	uriTA.val(toLines(uris));
+	var uriTA = $("textarea#uri-history").val("").unbind();
+	var uriLines = toLines(uris); 
+	uriTA.val(uriLines);
 	
-	
-	var headerHistTA = $("textarea#header-history"); 
-	headerHistTA.val("");
-	headerHistTA.val(toLines(headers));
-
+	storeTabs.find("a#edit-header-history-tab").text( "Header History" );//removes * if there
+	var headers = persistence.listHeaders();	
+	var headerHistTA = $("textarea#header-history").val("").unbind(); 
+	var headerLines = toLines(headers); 
+	headerHistTA.val(headerLines);
+	bindReqStoreTextareaEvents();
 	
 	
 	storeTabs.css( "display", "block" );
@@ -1406,6 +1452,24 @@ function displayRequestStore() {
 	//this is pretty slow and not cause of localStorage, jQuery is doing a lot up there when there's
 	//a lot of items. I'll figure out a better way to handle this later, for now it works.
 	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis.");
+}
+//used in two places
+function bindReqStoreTextareaEvents(ta) {
+	if(ta) {
+		var subject = ta;
+	} else var subject = storeTabs.find("textarea");
+	
+	subject.bind("paste cut keypress", function(e) {
+		if(log.isDebug)log.debug( "EVENT type '" + e.type + "' for '" +e.srcElement.id+ "'", e);
+		if(e.srcElement.id=="uri-history") {
+			storeTabs.find("a#edit-uri-history-tab").append("*");
+		} else if(e.srcElement.id=="header-history") {
+			storeTabs.find("a#edit-header-history-tab").append("*");
+		} else {
+			log.error("Recieved an unexpected event for for req store *s",e);
+		}
+		$(this).unbind();
+	});
 }
 
 function toArrayFromLines(lines) {

@@ -6,7 +6,8 @@
 		<link type="text/css" href="css/start/jquery-ui-1.8.4.custom.css" rel="stylesheet" />
 		<link type="text/css" href="css/rest-client-css.css" rel="stylesheet" />
 
-		<script type="text/javascript" src="js/jquery-1.4.2.min.js"></script>
+		<!-- script type="text/javascript" src="js/jquery-1.4.2.min.js"></script -->
+		<script type="text/javascript" src="js/jquery-1.5.js"></script>
 		<script type="text/javascript" src="js/jquery-ui-1.8.4.custom.min.js"></script>
 
 		<script type="text/javascript" src="js/json2.js"></script>
@@ -86,7 +87,7 @@
 			</div>
 	<style>
 		.ui-tabs-panel { height: 80%; overflow: auto; } 
-	</style>
+	</style> 
 	<div id="load-edit-tabs" style="display:none;">
 		<ul>
 			<li id="load-request-tab"><a id="load-request-tab" href="#load-request">Saved Requests</a></li>
@@ -94,7 +95,6 @@
 			<li id="edit-header-history-tab"><a id="edit-header-history-tab" href="#header-history">Header History</a></li>
 			
 			<button id="load-edit-tabs-close" style="float:right;">Close</button>
-			<button id="load-edit-tabs-save" style="float:right;">Save</button>
 		</ul>
 		<div id="load-request">
 			<div id="saved-requests-load-options">
@@ -110,6 +110,7 @@
 		</div>
 		<div id="uri-history">
 			<textarea id="uri-history" class="edit_history" rows="20"></textarea>
+			<button id="uri-history-save" style="float:right;margin-right:5px;">Save</button>
 		</div>
 		<!--
 		<div id="uri-history" style=";padding:20px;padding-top:0px;padding-top:5px;">
@@ -118,13 +119,11 @@
 		-->
 		<div id="header-history">
 			<textarea id="header-history" class="edit_history" rows="20"></textarea>
+			<button id="header-history-save" style="float:right;margin-right:5px;">Save</button>
 		</div>		
-		<!-- Tried to use this instead of textarea above, but we're things happen like
-			 having two <code> when a new line is present, same with URI hist.  	
-		<div id="header-history" style="padding:20px;padding-top:0px;padding-top:5px;">
-			<pre class="hist" contenteditable="true"><code id="header-history"></code></pre>
-		</div>
-		-->
+<div id="req-store-save-confirm" title="Save Changes?">
+	<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span></p>
+</div>
 	</div>	
 			<div id="modify_headers" style="display:none; padding:10px; border-left:0px solid black;border-bottom:0px solid black;">
 				<table cellpadding="0" cellspacing="0" style="padding-bottom:5px;">
