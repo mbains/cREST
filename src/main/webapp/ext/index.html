@@ -107,13 +107,24 @@
 				<label for="load_entity">Entity</label><br/><br/>
 			</div>			
 			<div id="items"></div>
-		</div><!-- height:300px;overflow:scroll -->
+		</div>
+		<div id="uri-history">
+			<textarea id="uri-history" class="edit_history" rows="20"></textarea>
+		</div>
+		<!--
 		<div id="uri-history" style=";padding:20px;padding-top:0px;padding-top:5px;">
 			<pre class="hist" contenteditable="true"><code id="uri-history"></code></pre>  		
 		</div>
+		-->
+		<div id="header-history">
+			<textarea id="header-history" class="edit_history" rows="20"></textarea>
+		</div>		
+		<!-- Tried to use this instead of textarea above, but we're things happen like
+			 having two <code> when a new line is present, same with URI hist.  	
 		<div id="header-history" style="padding:20px;padding-top:0px;padding-top:5px;">
 			<pre class="hist" contenteditable="true"><code id="header-history"></code></pre>
 		</div>
+		-->
 	</div>	
 			<div id="modify_headers" style="display:none; padding:10px; border-left:0px solid black;border-bottom:0px solid black;">
 				<table cellpadding="0" cellspacing="0" style="padding-bottom:5px;">

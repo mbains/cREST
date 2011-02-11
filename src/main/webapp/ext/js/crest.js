@@ -76,13 +76,27 @@ function Persistence() {
 		return storageObj(this.uriHistoryKey);
 	}
 	
-	this.storeURI = function(uri) {
-		var uriHist = storageObj(this.uriHistoryKey);
-		if( $.inArray(uri,uriHist) == -1 ) {
-			if(log.isDebug) log.debug( "storeURI storing URI '" + uri + "'" );
-			uriHist.push(uri);
+	this.storeURI = function(uri) { this.storeURIs([uri]);}
+	
+	this.storeURIs = function(uris,replaceAll) {
+		if(replaceAll)
+			var uriHist = new Array();
+		else
+			var uriHist = storageObj(this.uriHistoryKey);	
+		
+		var storeIt = false;
+		for( var i = 0; i < uris.length; i++ ) {
+			if( $.inArray(uris[i],uriHist) == -1 ) {
+				storeIt = true;
+				uriHist.push(uris[i]);
+			}
+		}
+		if(storeIt) {
+			if(log.isDebug) log.debug( "storeURIs storing uris:",uriHist );
 			storageObj(this.uriHistoryKey,uriHist.sort());
-		} else if(log.isDebug) log.debug( "storeURI not storing URI '" + uri + "' cause it already exists" );
+		} else if(log.isDebug) {
+			log.debug( "storeURIs not storing uris, all must already exist:",uriHist );
+		}
 	}
 	
 	this.listHeaders = function() {
@@ -94,29 +108,31 @@ function Persistence() {
 	 */
 	this.storeHeaders = function(reqHeaders,replaceAll) {
 		if(log.isDebug) log.debug( "storeHeaders called with headers:",reqHeaders );
-		var storeIt = false;
+		
 		if(replaceAll)
 			var headerHist = new Array();
 		else
 			var headerHist = storageObj(this.headerHistoryKey);
 		
+		var storeIt = false;
 		for( var i = 0; i < reqHeaders.length; i++ ) {//for each header
-			//console.log("type of in storeHeaders: " + (typeof reqHeaders[i] == "string"));
+			//coming from a textarea
 			if(typeof reqHeaders[i] == "string")
 				var header = reqHeaders[i];
-			else
+			else//coming from an ajax request so it's header object.
 				var header = reqHeaders[i].name + ": " + reqHeaders[i].value;//create the header string
 			
-			if( headerHist.length == 0 || $.inArray(header,headerHist) == -1 ) {//and see if we should push it
+			//don't think i need this - headerHist.length == 0 || 
+			if( $.inArray(header,headerHist) == -1 ) {//and see if we should push it
 				storeIt = true;
 				headerHist.push( header );
 			}
 		}
 		if(storeIt) {
-			if(log.isDebug) log.debug( "storeHeaders storing headers:",reqHeaders );
+			if(log.isDebug) log.debug( "storeHeaders storing headers:",headerHist );
 			storageObj(this.headerHistoryKey,headerHist.sort());
 		} else if(log.isDebug) {
-			log.debug( "storeHeaders not storing headers:",reqHeaders );
+			log.debug( "storeHeaders not storing headers, all must already exist:",reqHeaders );
 		}
 	}
 	
@@ -1245,17 +1261,19 @@ function init(){
 		//id of selected tab
 		var id = storeTabs.find("li.ui-tabs-selected").attr("id");
 		if(id=="edit-uri-history-tab") {
-			var uriHist = storeTabs.find("code#uri-history").text()
+			var uriHist = storeTabs.find("textarea#uri-history").val()
 			uriHist = toArrayFromLines(uriHist);
-			console.log( "finish uri hist store..." );
+			var replaceAll = true;
+			persistence.storeURIs(uriHist,replaceAll);
 		} else if(id=="edit-header-history-tab") {
-			var headerHist = storeTabs.find("code#header-history").text()
-			
-			console.log( "storing headers..." );
+			var headerHist = storeTabs.find("textarea#header-history").val()
+			console.log( "storing headers with text area..." );
+			console.log( "storing headers with text area..." );
 			console.log(headerHist);
 			headerHist = toArrayFromLines(headerHist);
 			console.log(headerHist);
-			persistence.storeHeaders(headerHist,true);
+			var replaceAll = true;
+			persistence.storeHeaders(headerHist,replaceAll);
 		} else log.error( "Save was clicked on a tab we're not handling. The id tab id is '" +id+ "'" );
 	});
 }
@@ -1370,34 +1388,19 @@ function displayRequestStore() {
 
 	var uris = persistence.listURIs();
 	var headers = persistence.listHeaders();
-	console.log("empty uri");
-	$("code#uri-history").empty();
-	
-	$("code#uri-history").text(toLines(uris));
 
-	console.log( "list headers..." );
-	console.log(headers);
-	console.log("current text:");
-	console.log($("code#header-history"));
-	console.log("empty headers");
-	$("code#header-history").text("");
-	console.log("text after empty: ");
-	console.log($("code#header-history").text());
+	var uriTA = $("textarea#uri-history");
+	uriTA.val("");
+	uriTA.val(toLines(uris));
 	
-	console.log( "calling to lines with: " );
-	console.log(headers);
-	var tolines = toLines(headers);
-	console.log( "toLines: " );
-	console.log( tolines );
 	
-	console.log($("code#header-history"));
-	$("code#header-history").text(tolines);
-	console.log( "the gui text:" );
-	console.log( $("code#header-history").text() );
-	//display tabs first so disable div see it's height
+	var headerHistTA = $("textarea#header-history"); 
+	headerHistTA.val("");
+	headerHistTA.val(toLines(headers));
+
+	
+	
 	storeTabs.css( "display", "block" );
-	
-
 	var oneAbove = enableDisableDiv();
 	storeTabs.css("z-index",oneAbove);
 	//this is pretty slow and not cause of localStorage, jQuery is doing a lot up there when there's
