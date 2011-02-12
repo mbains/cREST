@@ -178,6 +178,7 @@ function Persistence() {
 	}
 
 	this.storeRequest = function(request,store) {
+		request.name = $.trim(request.name);
 		var givenStore = true;
 		if(!store) {
 			var store = storageObj(this.reqStoreKey);
@@ -239,9 +240,11 @@ function Persistence() {
 		return success;
 	}
 	this.sortRequestsByName = function (a, b) {
-		if( a.name>b.name )
+		aname = a.name.toLowerCase();
+		bname = b.name.toLowerCase();
+		if( aname>bname )
 			return 1;
-		if( a.name<b.name )
+		if( aname<bname )
 			return -1
 		return 0;
 	}
@@ -316,13 +319,24 @@ function textareaHeadersToObject(headerText) {
 
 		var headerTextArray = headerText.split("\n");
 	    for (var i = 0; i < headerTextArray.length; i++) {
-	    	var name = headerTextArray[i].substring(0,headerTextArray[i].indexOf(":" ));
-	    	var value = headerTextArray[i].substring(headerTextArray[i].indexOf(":" )+1);
-	    	//TODO - I should probably add some validation logic here
-	    	reqHeaders.push({ name:$.trim(name),
-	    						value:$.trim(value)});
+	    	var line = $.trim(headerTextArray[i]);
+	    	if(line=="" || line.indexOf(":")==-1) {
+	    		log.warn("this ain't a header '" +line+ "'. It's either an empty line or has no ':'");
+	    		continue;
+	    	}
+	    	
+	    	var name = $.trim(line.substring(0,headerTextArray[i].indexOf(":" )));
+	    	var value = $.trim(line.substring(headerTextArray[i].indexOf(":" )+1));
+
+	    	if(!name|| !value) {
+	    		log.warn("this ain't a header '" +line+ "'. It's missing a name or value.");
+	    		continue;
+	    	}
+	    	reqHeaders.push({name:name,
+	    						value:value});
 	    }
 	}
+	console.log(reqHeaders);
 	return reqHeaders;
 }
 
@@ -416,8 +430,9 @@ function handleResponse( ajaxContext ) {
 
 	if( ajaxContext.xhr.readyState != 4 ) 
 		return;
-	ajaxContext.respTime = new Date().getTime()-ajaxContext.startTime
-	log.log( "response time timer: " + ajaxContext.timer.elapsed() );
+	
+	var elapsed = ajaxContext.timer.elapsed()
+	if(log.isDebug)log.debug( "response time timer: " + elapsed );
 	var xhr = ajaxContext.xhr;
 	var method = ajaxContext.method;
 	var uri = ajaxContext.uri;
@@ -620,7 +635,8 @@ function handleResponse( ajaxContext ) {
 				}
 				}).click(
 				function(event) {
-					var reqObj = new Request( new Date(), ajaxContext );
+					var name = ajaxContext.method+" "+ajaxContext.uri;
+					var reqObj = new Request( name, ajaxContext );
 					displayRequestEditor(reqObj,true);
 				}).css("display", "");
 		
@@ -648,6 +664,7 @@ function handleResponse( ajaxContext ) {
 
 
 	//now let's handle the actual response...
+	newResp.find("span#resp-time").html("&nbsp;&nbsp;Response Time: " + elapsed + " milliseconds&nbsp;&nbsp;");
 	newResp.find( "code#respHeadersCode" ).html( formatHeaders( xhr.getAllResponseHeaders() ) );
 	newResp.find("div#respSelectButtons").prepend("Select: ");
 	newResp.find("button#selectRespHeaders").button().click(
@@ -885,7 +902,7 @@ function loadSavedRequestInUI( name, loadOpts ) {
 				entity:true
 		}
 	}
-	var touch = true;//just want to be explicit.
+	var touch = true;
 	var request = persistence.locateRequest(name,touch);
 	if(!request) {
 		alert( "Sorry, unable to load request with name '" + name + "'. It's likely that cREST has a bug, please report this to the cREST google group. " );
@@ -1140,8 +1157,21 @@ function init(){
 
 	$("#add_header").button().click(
 			function(){
+				var acValue = $("#header-autocomplete").val();
+				var req = persistence.locateRequest(acValue, false);
+				var currentLines = headersTa.textarea.val()
+				if( req ) {
+					var headers = req.ajaxctx.reqHeaders;
+					var newLines = "";
+					for(var i=0;i<headers.length;i++) {
+						var line = headers[i].name + ": " + headers[i].value+"\n";
+						if(currentLines=="" || currentLines.indexOf(line) == -1)
+							newLines+=line;
+					}
+				} else
+					newLines = acValue;
 				//see comment for "select" event above for why i'm doing text(val()) call
-				headersTa.textarea.text( headersTa.textarea.val() ).append($("#header-autocomplete").val()).append("\n");
+				headersTa.textarea.text( currentLines ).append(newLines).append("\n");
 				$("#header-autocomplete").val("");
 				headersTa.checkExpand();
 				return false;
@@ -1176,8 +1206,7 @@ function init(){
 	});
 	$("input#req_store").button().click(function() {
 		storeTabs.find("a#load-request-tab").trigger("click");
-		storeTabs.find("button#load-edit-tabs-save").css("display","none");
-		
+				
 		displayRequestStore();
 		if($(this).is(":checked")) {
 			$(this).attr('checked', false).trigger("change").trigger("refresh");
@@ -1260,13 +1289,6 @@ function init(){
 	storeTabs = $("#load-edit-tabs");
 	
 	storeTabs.tabs().bind("tabsselect", function(event, ui) {
-		var saveButton = $(this).find("button#load-edit-tabs-save");
-		
-		if(ui.tab.id == "load-request-tab")
-			saveButton.css("display","none");
-		else
-			saveButton.css("display","");
-		
 		enableDisableDiv();//adjust the disable div if height is different for tab.
 	});
 	storeTabs.find("button#load-edit-tabs-close").button({
@@ -1275,11 +1297,6 @@ function init(){
 			primary: 'ui-icon-close'
 		}
 	}).click( function(e) {
-		console.log("here");
-		
-//		var uriChange = endsWithStarExp.test(storeTabs.find("a#edit-uri-history-tab").text()); 
-//		var headerChange = endsWithStarExp.test(storeTabs.find("a#edit-header-history-tab").text()); 
-
 		var uriChange = startsWithStarExp.test(storeTabs.find("a#edit-uri-history-tab").text()); 
 		var headerChange = startsWithStarExp.test(storeTabs.find("a#edit-header-history-tab").text()); 
 
@@ -1383,77 +1400,7 @@ function displayRequestStore() {
 	var itemList = savedReqs.find( "div#items" );
 	itemList.empty();//remove everything then build the list back up...
 	for(var i = 0; i < names.length; i++ ) {//saved request items...
-		//set up each item just like they responses bar is (and others)
-		//for some reason the clone approach i've used before isn't working hence all the html
-		var item = $("<div class='ui-widget-content ui-corner-all' style='cursor: default;padding-left: 2px; padding-top:7px; padding-bottom:7px;margin-bottom:5px;'></div>");
-		//if(log.isDebug)log.debug( "adding name '" +names[i]+ "' to the request store" );
-		
-		var itemName = $("<div><pre class='saved' /></div>").find("pre").text(names[i]);
-		//var itemName = $("<div/>").text(names[i]);
-		var hiddenName = $("<input id='item-name' type='hidden'/>").val(names[i]);
-		itemName.append(hiddenName);
-		var itemButtons = $("<div style='top:-4px;position:relative;float:left;padding-right:4px;'></div>");
-		
-		var runButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>load in Request Builder and submit request</button>").button({
-			text: false,
-			icons: {
-				primary: 'ui-icon-play'
-			}
-		}).click(
-				function() {
-					loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
-					$("#submit_request").trigger("click");
-				});
-		
-		var loadButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button({
-			text: false,
-			icons: {
-				primary: "ui-icon-arrowreturnthick-1-n"//'ui-icon-folder-open'
-			}
-		}).click(
-				function() {
-					loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
-				});
-		
-		var editButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button({
-			text: false,
-			icons: {
-				primary: 'ui-icon-pencil'
-			}
-		}).click(
-				function() {
-					displayRequestEditor($(this).parent().parent().find("input#item-name").val(),false);
-				});
-		
-		var deleteButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Trash</button>").button({
-			text: false,
-			icons: {
-				primary: 'ui-icon-trash'
-			}
-		}).click(
-				function() {
-					var success = persistence.removeRequest($(this).parent().parent().find("input#item-name").val());
-					if(!success) {
-						alert("Sorry. Unable to remove request named " + this.id );
-						return;
-					}
-					$(this).parent().parent().remove();
-				});
-		
-		itemButtons.append(runButton).append(loadButton).append(editButton).append(deleteButton);
-		item.append( itemButtons );
-		item.append( itemName );
-
-		item.dblclick(function (){
-			loadAndCloseRequestStore( $(this).find("input#item-name").val() );
-		}).mouseover(function () {
-		    $(this).css("background", "#ACDD4A");
-		    //$(this).css("font-weight", "bold");
-		  }).mouseout(function () {
-		    $(this).css("background", "");
-		    //$(this).css("font-weight", "");
-		  });
-		
+		var item = createSaveItemForReqStore(names[i]);
 		itemList.append(item);
 	}//saved request item loop	
 	removeStarFromText(storeTabs.find("a#edit-uri-history-tab"));
@@ -1467,8 +1414,11 @@ function displayRequestStore() {
 	var headerHistTA = $("textarea#header-history").val("").unbind(); 
 	var headerLines = toLines(headers); 
 	headerHistTA.val(headerLines);
+	
 	bindReqStoreTextareaEvents();
 	
+	if(names.length==0)
+		itemList.append("You should save some requests so you have some stored.");
 	
 	storeTabs.css( "display", "block" );
 	var oneAbove = enableDisableDiv();
@@ -1476,6 +1426,80 @@ function displayRequestStore() {
 	//this is pretty slow and not cause of localStorage, jQuery is doing a lot up there when there's
 	//a lot of items. I'll figure out a better way to handle this later, for now it works.
 	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis.");
+}
+
+function createSaveItemForReqStore(name) {
+	var item = $("<div class='ui-widget-content ui-corner-all' style='cursor: default;padding-left: 2px; padding-top:7px; padding-bottom:7px;margin-bottom:5px;'></div>");
+	//if(log.isDebug)log.debug( "adding name '" +names[i]+ "' to the request store" );
+	
+	var itemName = $("<div><pre style='border:0px solid black;' class='saved' /></div>").find("pre").text(name);
+	//var itemName = $("<div/>").text(name);
+	var hiddenName = $("<input id='item-name' type='hidden'/>").val(name);
+	itemName.append(hiddenName);
+	var itemButtonsLeft = $("<div style='top:-4px;position:relative;float:left;padding-right:4px;'></div>");
+	
+	var runButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Loand and Run</button>").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-play'
+		}
+	}).click(
+			function() {
+				loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
+				$("#submit_request").trigger("click");
+			});
+	
+	var loadButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button({
+		text: false,
+		icons: {
+			primary: "ui-icon-arrowreturnthick-1-n"//'ui-icon-folder-open'
+		}
+	}).click(
+			function() {
+				loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
+			});
+	
+	var editButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-pencil'
+		}
+	}).click(
+			function() {
+				displayRequestEditor($(this).parent().parent().find("input#item-name").val(),false);
+			});
+	
+	var deleteButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Trash</button>").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-trash'
+		}
+	}).click(
+			function() {
+				var success = persistence.removeRequest($(this).parent().parent().find("input#item-name").val());
+				if(!success) {
+					alert("Sorry. Unable to remove request named " + this.id );
+					return;
+				}
+				$(this).parent().parent().remove();
+			});
+	
+	itemButtonsLeft.append(runButton).append(loadButton).append(editButton);
+	item.append( itemButtonsLeft );
+	item.append( itemName );
+	var itemButtonsRight = $("<div style='border:0px solid black; top:-17px;position:relative;float:right;padding-right:3px;'></div>");
+	itemButtonsRight.append(deleteButton);
+	item.append(itemButtonsRight);
+	item.dblclick(function (){
+		loadAndCloseRequestStore( $(this).find("input#item-name").val() );
+	}).mouseover(function () {
+	    $(this).css("background", "#ACDD4A");
+	    //$(this).css("font-weight", "bold");
+	  }).mouseout(function () {
+	    $(this).css("background", "");
+	    //$(this).css("font-weight", "");
+	  });
+	return item;
 }
 /*
  * used in two places, once during reqStore show, and then again after someone clicks save. This
@@ -1570,6 +1594,8 @@ function displayRequestEditor(req,isNew) {
 	}
 	(function(closuredReq,isNew){//i need to reference the req in the save function (for method) so this keeps the req in scope... guess i could put in in a hidden field.
 		var isEdit = !isNew;//just to be explicit... if it's not new, it must be an edit to an exiting one.
+
+		
 		if(log.isDebug)log.debug( "displayRequestEditor invoked with Request named '" + closuredReq.name + "' and isNew = "+isNew+". Here's the whole object", closuredReq );
 		var saveInput = $("div#save-request-input-cloner").clone();
 		saveInput.attr("id","new-save-request-input-cloner");//ensures we only do things with the clone
@@ -1601,19 +1627,19 @@ function displayRequestEditor(req,isNew) {
 					autoOpen: true,
 					modal: true,
 					width: 700,
-					height:500,
-					title: "Req Store Request Editor",
+					height:600,
+					title: "Request Editor",
 					buttons: { "Save" :
 								
 								   function() {
-										var name = createRequestFromEditor().name;//ensure trim is applied to name for save, and in this case name for further usage
-
-										
+										var reqFromEditor = createRequestFromEditor();//ensure trim is applied to name for save, and in this case name for further usage
+										var name = reqFromEditor.name;
 										var btnArea = $($(this).parent().find("button").parent());
 										var saveSpan = $(btnArea.find("button")[0]).find("span");
 										var cancelSpan = $(btnArea.find("button")[1]).find("span");
 										//if (it's a new request being save) and if (if the request exists) and if (no duplicate warning has been seen), show the warning
-										if( isNew && persistence.locateRequest( name ) && saveSpan.text()=="Save" ) {
+										if( (isNew && persistence.locateRequest( name ) && saveSpan.text()=="Save") || 
+											(isEdit && closuredReq.name != name && persistence.locateRequest( name ) && saveSpan.text()=="Save") ) {
 											if(log.isDebug)log.debug( "NEW Request already exists with name '" +name+ "'. I'm gonna present a warning message and repurpose the buttons to confirm overwrite" );
 											var errmsg = $("div#error-msg-cloner").clone().attr("id","new-error-msg-cloner");
 											errmsg.find("p#msg").append("An item with that name exists, would you like to overwrite it?&nbsp;&nbsp;");
@@ -1625,7 +1651,16 @@ function displayRequestEditor(req,isNew) {
 										} else if(saveSpan.text()=="Yes" || isEdit) {
 											if(log.isDebug) log.debug( "User chose to overwrite or update existing request with name '" +name+ "' and isNew = " + isNew );
 											var req = createRequestFromEditor();
+											var existing = (persistence.locateRequest( name ))? true:false;
 											persistence.replaceRequest(req);
+											
+											//if req store is showing and the name doesn't already exist
+											if(storeTabs.css("display")=="block" && !existing) {
+												var items = storeTabs.find( "div#items")
+												var newItem = createSaveItemForReqStore(name);
+												items.append(newItem);
+											}
+											
 											saveInput.remove();
 										} else { //totally new name so just save it.
 											if(log.isDebug)log.debug( "Storing new request with name '" +name+ "'" );
@@ -1652,6 +1687,7 @@ function displayRequestEditor(req,isNew) {
 							 }
 				}					
 		);
+		saveInput.find("input#save-request-input-name").blur();
 	})(req,isNew);
 	//saveInput.siblings(".ui-dialog-titlebar").hide();
 }
