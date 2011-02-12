@@ -1071,32 +1071,28 @@ function init(){
 			var alreadySelected = headersTa.textarea.val();
 			var headerHist = persistence.listHeaders();
 			
-			//remove items that are already selected.
+			var names = persistence.listRequestNames();
+			var nameObjs = [];
+			for(var i = 0; i < names.length; i++) {
+				nameObjs[i] = { label: names[i], value: names[i], crestType:"savedReq" }
+			}
+
+			//awesomeBar(uris.concat(nameObjs), req, resp);
+			
+			//remove autocomplete items that are already selected in the textarea.
 			var filteredHeaderHist = $.map(headerHist, function(item) {
 				if( alreadySelected.indexOf(item) != -1 )
 					return;
 
 				return item;//not already selected.
 			});
-
-			awesomeBar( filteredHeaderHist, req, resp);
+			
+			awesomeBar( filteredHeaderHist.concat(nameObjs), req, resp);
 
 		},
 		minLength: 2, 
 		select: function(event,ui) {
 			//put selected value in headers text area when it's selected from drop down
-
-			//this one call is all i had before, but for some reasons if you deleted
-			//the text from the text area, the append would still include the text that was deleted.
-			//headersTa.textarea.append(ui.item.value).append("\n");
-			//
-			//headersTa.textarea.val() reflected the correct value of the textarea, but headers.text() would
-			//always return the deleted text. So to fix the issue, i set the text() to the val() prior
-			//to appending. I guess the append call appends to the value of text().
-
-//			var headers = $("textarea#request_headers");
-//			headers.text( headers.val() ).append(ui.item.value).append("\n");
-
 			headersTa.textarea.text( headersTa.textarea.val() ).append(ui.item.value).append("\n");
 
 
@@ -1255,9 +1251,12 @@ function init(){
 	}).click( function(e) {
 		console.log("here");
 		
-		var uriChange = endsWithStarExp.test(storeTabs.find("a#edit-uri-history-tab").text()); 
-		var headerChange = endsWithStarExp.test(storeTabs.find("a#edit-header-history-tab").text()); 
-			
+//		var uriChange = endsWithStarExp.test(storeTabs.find("a#edit-uri-history-tab").text()); 
+//		var headerChange = endsWithStarExp.test(storeTabs.find("a#edit-header-history-tab").text()); 
+
+		var uriChange = startsWithStarExp.test(storeTabs.find("a#edit-uri-history-tab").text()); 
+		var headerChange = startsWithStarExp.test(storeTabs.find("a#edit-header-history-tab").text()); 
+
 		
 		if(uriChange || headerChange ) {
 			
@@ -1317,7 +1316,8 @@ function init(){
 	});
 }
 var gStarReplaceExp = /\*/g;
-var endsWithStarExp = /\*$/;
+//var endsWithStarExp = /\*$/;
+var startsWithStarExp = /^\*/;
 
 function removeStarFromText(jqObj) {
 	jqObj.text(jqObj.text().replace(gStarReplaceExp,""));
@@ -1431,14 +1431,13 @@ function displayRequestStore() {
 		
 		itemList.append(item);
 	}//saved request item loop	
-	
-	storeTabs.find("a#edit-uri-history-tab").text( "URI History" );//removes * if there
+	removeStarFromText(storeTabs.find("a#edit-uri-history-tab"));
 	var uris = persistence.listURIs();
 	var uriTA = $("textarea#uri-history").val("").unbind();
 	var uriLines = toLines(uris); 
 	uriTA.val(uriLines);
 	
-	storeTabs.find("a#edit-header-history-tab").text( "Header History" );//removes * if there
+	removeStarFromText(storeTabs.find("a#edit-header-history-tab"));
 	var headers = persistence.listHeaders();	
 	var headerHistTA = $("textarea#header-history").val("").unbind(); 
 	var headerLines = toLines(headers); 
@@ -1453,18 +1452,18 @@ function displayRequestStore() {
 	//a lot of items. I'll figure out a better way to handle this later, for now it works.
 	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis.");
 }
-//used in two places
+//used in two places, once during reqStore show, and then again after someone clicks save.
 function bindReqStoreTextareaEvents(ta) {
-	if(ta) {
+	if(ta) {w
 		var subject = ta;
 	} else var subject = storeTabs.find("textarea");
 	
 	subject.bind("paste cut keypress", function(e) {
 		if(log.isDebug)log.debug( "EVENT type '" + e.type + "' for '" +e.srcElement.id+ "'", e);
 		if(e.srcElement.id=="uri-history") {
-			storeTabs.find("a#edit-uri-history-tab").append("*");
+			storeTabs.find("a#edit-uri-history-tab").prepend("*");
 		} else if(e.srcElement.id=="header-history") {
-			storeTabs.find("a#edit-header-history-tab").append("*");
+			storeTabs.find("a#edit-header-history-tab").prepend("*");
 		} else {
 			log.error("Recieved an unexpected event for for req store *s",e);
 		}
