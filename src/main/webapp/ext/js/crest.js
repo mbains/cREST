@@ -1092,22 +1092,48 @@ function init(){
 		},
 		minLength: 2, 
 		select: function(event,ui) {
-			//put selected value in headers text area when it's selected from drop down
-			headersTa.textarea.text( headersTa.textarea.val() ).append(ui.item.value).append("\n");
+			var currentLines = headersTa.textarea.val();
+			//called when a req name is chosen not an individual header.
+			if(ui.item && ui.item.crestType == "savedReq") {
+				console.log("ui.item.value: " + ui.item.value );
+				var req = persistence.locateRequest(ui.item.value);
+				var headers = req.ajaxctx.reqHeaders;
+				var newLines = "";
+				for(var i=0;i<headers.length;i++) {
+					var line = headers[i].name + ": " + headers[i].value
+					if(currentLines=="" || currentLines.indexOf(line) == -1)
+						newLines+=line+"\n";
+				}
+				//clear the name out
+				$("#header-autocomplete").data("clearIt",true);
+				console.log("one: ");
+				console.log( $("#header-autocomplete").data().clearIt );
+			} else {//put selected value in headers text area when it's selected from drop down
+				var newLines = ui.item.value+"\n";
+			}
+			
+			
+			if(currentLines!="" && !/\n$/.test(currentLines))
+				currentLines+="\n";
 
-
+			
+			headersTa.textarea.text( currentLines ).append(newLines);
 			headersTa.checkExpand();
 		},
-		close: function(even,ui) {
+		close: function(event,ui) {
 			//when autocomplete drop down closes, see if the value in the autocomplete field
-			//is found in the text area, if so, remove it from the autocomplete since it was
+			//is found in the text area, if so, remove it from the autocomplete <input> since it was
 			//already added. If it's not in text area, user must have look at the drop down and
 			//not selected anything (like clicking elsewhere on the page or pressing esc).
 			//var headersArea = $("textarea#request_headers").val();
-
 			var headersArea = headersTa.textarea.val();
 			if( headersArea.indexOf($("#header-autocomplete").val()) != -1 )
 				$("#header-autocomplete").val("");
+			else if($("#header-autocomplete").data().clearIt) {
+				console.log( "Clearing it..." );
+				$("#header-autocomplete").data().clearIt=false;
+				$("#header-autocomplete").val("");
+			}
 		}
 	}
 	);
@@ -1316,7 +1342,6 @@ function init(){
 	});
 }
 var gStarReplaceExp = /\*/g;
-//var endsWithStarExp = /\*$/;
 var startsWithStarExp = /^\*/;
 
 function removeStarFromText(jqObj) {
@@ -1452,9 +1477,12 @@ function displayRequestStore() {
 	//a lot of items. I'll figure out a better way to handle this later, for now it works.
 	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis.");
 }
-//used in two places, once during reqStore show, and then again after someone clicks save.
+/*
+ * used in two places, once during reqStore show, and then again after someone clicks save. This
+ * avoids handling the event while * is already shown.
+ */
 function bindReqStoreTextareaEvents(ta) {
-	if(ta) {w
+	if(ta) {
 		var subject = ta;
 	} else var subject = storeTabs.find("textarea");
 	
