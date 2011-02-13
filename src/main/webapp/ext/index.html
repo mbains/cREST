@@ -20,6 +20,7 @@
     	<script type="text/javascript" src="js/jquery-fieldselection.js"></script>
     	
 		<script type="text/javascript" src="js/crest.js"></script>
+		<script type="text/javascript" src="js/rfc2626.response.codes.js"></script>
 	</head>
 <body>
 <div id="screen-disable" style="display:none;position:absolute; opacity:0.3; z-index:1000; top:0; left:0; width:100%; height:100%; background-color:#000000;">
@@ -256,6 +257,83 @@
 		</p>
 	</div>
 	<!--<button id="tester">test button</button>-->
+	<div id="tooltips" style="display:block">
+		<div id="http100">
+			<h3><a id='sec10.1.1'>10.1.1</a> 100 Continue</h3> 
+			<p> 
+			   The client SHOULD continue with its request. This interim response is
+			   used to inform the client that the initial part of the request has
+			   been received and has not yet been rejected by the server. The client
+			   SHOULD continue by sending the remainder of the request or, if the
+			   request has already been completed, ignore this response. The server
+			   MUST send a final response after the request has been completed. See
+			   section <a rel='xref' href='rfc2616-sec8.html#sec8.2.3'>8.2.3</a> for detailed discussion of the use and handling of this
+			   status code.
+			</p> 			
+		</div>
+		<div id="http101">
+			<h3><a id='sec10.1.2'>10.1.2</a> 101 Switching Protocols</h3> 
+			<p> 
+			   The server understands and is willing to comply with the client's
+			   request, via the Upgrade message header field (section 14.42), for a
+			   change in the application protocol being used on this connection. The
+			   server will switch protocols to those defined by the response's
+			   Upgrade header field immediately after the empty line which
+			   terminates the 101 response.
+			</p> 
+			<p> 
+			   The protocol SHOULD be switched only when it is advantageous to do
+			   so. For example, switching to a newer version of HTTP is advantageous
+			   over older versions, and switching to a real-time, synchronous
+			   protocol might be advantageous when delivering resources that use
+			   such features.
+				</p>
+		</div>
+		
+		<div id="http200">
+			<h3><a id='sec10.2.1'>10.2.1</a> 200 OK</h3> 
+			<p> 
+			   The request has succeeded. The information returned with the response
+			   is dependent on the method used in the request, for example:
+			</p> 
+			<p> 
+			   GET    an entity corresponding to the requested resource is sent in
+			          the response;
+			</p> 
+			<p> 
+			   HEAD   the entity-header fields corresponding to the requested
+			          resource are sent in the response without any message-body;
+			</p> 
+			<p> 
+			   POST   an entity describing or containing the result of the action;
+			</p> 
+			<p> 
+			   TRACE  an entity containing the request message as received by the
+			          end server.
+			</p> 
+		</div>
+		<div id="http201">
+			<h3><a id='sec10.2.2'>10.2.2</a> 201 Created</h3> 
+			<p> 
+			   The request has been fulfilled and resulted in a new resource being
+			   created. The newly created resource can be referenced by the URI(s)
+			   returned in the entity of the response, with the most specific URI
+			   for the resource given by a Location header field. The response
+			   SHOULD include an entity containing a list of resource
+			   characteristics and location(s) from which the user or user agent can
+			   choose the one most appropriate. The entity format is specified by
+			   the media type given in the Content-Type header field. The origin
+			   server MUST create the resource before returning the 201 status code.
+			   If the action cannot be carried out immediately, the server SHOULD
+			   respond with 202 (Accepted) response instead.
+			</p> 
+			<p> 
+			   A 201 response MAY contain an ETag response header field indicating
+			   the current value of the entity tag for the requested variant just
+			   created, see section <a rel='xref' href='rfc2616-sec14.html#sec14.19'>14.19</a>.
+			</p> 
+		</div>
+	</div>
 </div>
 		<!--what's that form for?
 <form>
@@ -320,7 +398,7 @@
 					as ids for elements, i assume a "" would break it.</li>
 					<li>Sort saved requests by date</li>
 				</ol>
-			</div>-->
-		</div>
+			</div>
+		</div>-->
 	</body>
 </html>

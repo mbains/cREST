@@ -1576,9 +1576,13 @@ function toUniqueArray(a){
 	return a;
 }
 
+
 var devMode = false;
 $(window).load(function() {
-	init();
+	console.log("responseStatusExp");
+	console.log(responseStatusExp);
+	init();	
+
 	if(devMode) {
 		//$.getScript("js/devMode.js"); - uses async so other stuff that depends on it fails!
 		$.ajax({
