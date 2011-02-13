@@ -5,7 +5,7 @@
  * 3. Request Store!!
  * 4. XHR response time
  */
-var log = new Logger( true );
+var log = new Logger( false );
 function Logger(isDebug) {
 	if(isDebug==true)
 		this.isDebug = true;
@@ -336,7 +336,6 @@ function textareaHeadersToObject(headerText) {
 	    						value:value});
 	    }
 	}
-	console.log(reqHeaders);
 	return reqHeaders;
 }
 
@@ -1504,23 +1503,38 @@ function createSaveItemForReqStore(name) {
 /*
  * used in two places, once during reqStore show, and then again after someone clicks save. This
  * avoids handling the event while * is already shown.
+ * 
+ * Always need an array here to use $() when passing TA to this method
  */
 function bindReqStoreTextareaEvents(ta) {
 	if(ta) {
-		var subject = ta;
-	} else var subject = storeTabs.find("textarea");
+		var subjects = ta;
+	} else var subjects = storeTabs.find("textarea");
 	
-	subject.bind("paste cut keypress", function(e) {
-		if(log.isDebug)log.debug( "EVENT type '" + e.type + "' for '" +e.srcElement.id+ "'", e);
-		if(e.srcElement.id=="uri-history") {
-			storeTabs.find("a#edit-uri-history-tab").prepend("*");
-		} else if(e.srcElement.id=="header-history") {
-			storeTabs.find("a#edit-header-history-tab").prepend("*");
+	//using this data("bound") to prevent the binding multiple times on a TA
+	//this was happening when someone clicks save a few times each click resulted
+	//in this method binding more "paste cut keypress" handlers so many *s were being added
+	for(var i = 0; i < subjects.length; i++ ) {
+		var subject = $(subjects[i]);
+		if(! subject.data("bound") ) {
+			if(log.isDebug)log.debug( "text area not yet bound:", subject );
+			subject.bind("paste cut keypress", function(e) {
+				if(log.isDebug)log.debug( "EVENT type '" + e.type + "' for '" +e.srcElement.id+ "'", e);
+				if(e.srcElement.id=="uri-history") {
+					storeTabs.find("a#edit-uri-history-tab").prepend("*");
+				} else if(e.srcElement.id=="header-history") {
+					storeTabs.find("a#edit-header-history-tab").prepend("*");
+				} else {
+					log.error("Recieved an unexpected event for for req store *s",e);
+				}
+				$(this).unbind();
+				$(this).data("bound",false);
+			});
+			subject.data("bound",true);		
 		} else {
-			log.error("Recieved an unexpected event for for req store *s",e);
+			if(log.isDebug)log.debug( "text area was already bound already bound:", subject );
 		}
-		$(this).unbind();
-	});
+	}
 }
 
 function toArrayFromLines(lines) {
