@@ -5,7 +5,7 @@
  * 3. Request Store!!
  * 4. XHR response time
  */
-var log = new Logger( false );
+var log = new Logger( true );
 function Logger(isDebug) {
 	if(isDebug==true)
 		this.isDebug = true;
@@ -192,9 +192,14 @@ function Persistence() {
 		return this.storeRequestsAndNames(store);
 	}
 	
-	this.replaceRequest = function(request) {
-		if(log.isDebug) {log.debug( "replaceRequest called request object:",request );}
-		var replaceName = request.name;
+	this.replaceRequest = function(request,replaceName) {
+		
+		if(!replaceName)
+			var replaceName = request.name;
+
+		if(log.isDebug) {log.debug( "replaceRequest called. replacing name '" +replaceName+ "' with new request object:",request );}
+
+		
 		var store = storageObj(this.reqStoreKey);
 		var newStore = {"items":[]};
 		for(var i = 0; i < store.items.length; i++ )//create new store w/out the request
@@ -1399,7 +1404,7 @@ function displayRequestStore() {
 	var itemList = savedReqs.find( "div#items" );
 	itemList.empty();//remove everything then build the list back up...
 	for(var i = 0; i < names.length; i++ ) {//saved request items...
-		var item = createSaveItemForReqStore(names[i]);
+		var item = createSavedReqForReqStore(names[i]);
 		itemList.append(item);
 	}//saved request item loop	
 	removeStarFromText(storeTabs.find("a#edit-uri-history-tab"));
@@ -1427,13 +1432,14 @@ function displayRequestStore() {
 	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis.");
 }
 
-function createSaveItemForReqStore(name) {
+function createSavedReqForReqStore(name) {
 	var item = $("<div class='ui-widget-content ui-corner-all' style='cursor: default;padding-left: 2px; padding-top:7px; padding-bottom:7px;margin-bottom:5px;'></div>");
 	//if(log.isDebug)log.debug( "adding name '" +names[i]+ "' to the request store" );
 	
-	var itemName = $("<div><pre style='border:0px solid black;' class='saved' /></div>").find("pre").text(name);
-	//var itemName = $("<div/>").text(name);
-	var hiddenName = $("<input id='item-name' type='hidden'/>").val(name);
+	
+	var itemName = $("<pre id='req-store-req-name' style='border:0px solid black;' class='saved' />").text(name);
+	var hiddenName = $("<input id='item-name' type='hidden'/>").val(name);//SOR
+	
 	itemName.append(hiddenName);
 	var itemButtonsLeft = $("<div style='top:-4px;position:relative;float:left;padding-right:4px;'></div>");
 	
@@ -1456,6 +1462,20 @@ function createSaveItemForReqStore(name) {
 	}).click(
 			function() {
 				loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
+			});
+	
+
+	var copyButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-copy'
+		}
+	}).click(
+			function() {
+				var rname = $(this).parent().parent().find("input#item-name").val();
+				var req = persistence.locateRequest(rname, false);
+				var reqObj = new Request( "Copy of "+rname, req.ajaxctx );
+				displayRequestEditor(reqObj,true);
 			});
 	
 	var editButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button({
@@ -1483,7 +1503,7 @@ function createSaveItemForReqStore(name) {
 				$(this).parent().parent().remove();
 			});
 	
-	itemButtonsLeft.append(runButton).append(loadButton).append(editButton);
+	itemButtonsLeft.append(runButton).append(loadButton).append(copyButton).append(editButton);
 	item.append( itemButtonsLeft );
 	item.append( itemName );
 	var itemButtonsRight = $("<div style='border:0px solid black; top:-17px;position:relative;float:right;padding-right:3px;'></div>");
@@ -1517,7 +1537,6 @@ function bindReqStoreTextareaEvents(ta) {
 	for(var i = 0; i < subjects.length; i++ ) {
 		var subject = $(subjects[i]);
 		if(! subject.data("bound") ) {
-			if(log.isDebug)log.debug( "text area not yet bound:", subject );
 			subject.bind("paste cut keypress", function(e) {
 				if(log.isDebug)log.debug( "EVENT type '" + e.type + "' for '" +e.srcElement.id+ "'", e);
 				if(e.srcElement.id=="uri-history") {
@@ -1579,8 +1598,6 @@ function toUniqueArray(a){
 
 var devMode = false;
 $(window).load(function() {
-	console.log("responseStatusExp");
-	console.log(responseStatusExp);
 	init();	
 
 	if(devMode) {
@@ -1605,6 +1622,7 @@ $(window).load(function() {
  * user.
  */
 function displayRequestEditor(req,isNew) {
+
 	if( typeof req == "string" ) {//req must be a name.
 		var name = req;
 		req = persistence.locateRequest(req, false);
@@ -1612,7 +1630,6 @@ function displayRequestEditor(req,isNew) {
 	}
 	(function(closuredReq,isNew){//i need to reference the req in the save function (for method) so this keeps the req in scope... guess i could put in in a hidden field.
 		var isEdit = !isNew;//just to be explicit... if it's not new, it must be an edit to an exiting one.
-
 		
 		if(log.isDebug)log.debug( "displayRequestEditor invoked with Request named '" + closuredReq.name + "' and isNew = "+isNew+". Here's the whole object", closuredReq );
 		var saveInput = $("div#save-request-input-cloner").clone();
@@ -1669,21 +1686,37 @@ function displayRequestEditor(req,isNew) {
 										} else if(saveSpan.text()=="Yes" || isEdit) {
 											if(log.isDebug) log.debug( "User chose to overwrite or update existing request with name '" +name+ "' and isNew = " + isNew );
 											var req = createRequestFromEditor();
-											var existing = (persistence.locateRequest( name ))? true:false;
-											persistence.replaceRequest(req);
-											
-											//if req store is showing and the name doesn't already exist
-											if(storeTabs.css("display")=="block" && !existing) {
-												var items = storeTabs.find( "div#items")
-												var newItem = createSaveItemForReqStore(name);
-												items.append(newItem);
+											var existing = (persistence.locateRequest( req.name ))? true:false;
+											if(closuredReq.name != req.name && isEdit ) {//renaming existing, don't create anew one in the UI like before, just rename the one there.
+												if(existing)//if they renamed a req to an existing one, remove it
+													persistence.removeRequest(req.name);
+												
+												//the second name param causes replaceRequest to look for that name to 
+												//replace, not the one on req which much have been renamed in the editor
+												persistence.replaceRequest(req, closuredReq.name);
+												
+												displayRequestStore();
+
+											} else {
+												persistence.replaceRequest(req);
+												//if req store is showing and the name doesn't already exist
+												if(storeTabs.css("display")=="block" && !existing) {
+													var items = storeTabs.find( "div#items")
+													var newItem = createSavedReqForReqStore(name);
+													items.append(newItem);
+												}
 											}
 											
 											saveInput.remove();
 										} else { //totally new name so just save it.
-											if(log.isDebug)log.debug( "Storing new request with name '" +name+ "'" );
+											if(log.isDebug) log.debug( "Editor Storing totally new request with name '" +name+ "'" );
 											var newReq = createRequestFromEditor();
 											persistence.storeRequest(newReq);
+											if(storeTabs.css("display")=="block") {
+												var items = storeTabs.find( "div#items")
+												var newItem = createSavedReqForReqStore(newReq.name);
+												items.append(newItem);
+											}
 											saveInput.remove();
 										}
 								   },
