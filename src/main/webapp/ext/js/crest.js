@@ -897,7 +897,7 @@ function editHistory( id, title ) {
 	});
 }
 
-function loadSavedRequestInUI( name, loadOpts ) {
+function loadSavedRequestInUI( nameOrReq, loadOpts ) {
 
 	if(!loadOpts) {//default to load everything
 		var loadOpts = {
@@ -907,11 +907,18 @@ function loadSavedRequestInUI( name, loadOpts ) {
 		}
 	}
 	var touch = true;
-	var request = persistence.locateRequest(name,touch);
-	if(!request) {
-		alert( "Sorry, unable to load request with name '" + name + "'. It's likely that cREST has a bug, please report this to the cREST google group. " );
-		return;
+	
+	if( nameOrReq.name ) {
+		var request = nameOrReq;
+	} else {
+		var request = persistence.locateRequest(nameOrReq,touch);
+		if(!request) {
+			alert( "Sorry, unable to load request with name '" + nameOrReq + "'. It's likely that cREST has a bug, please report this to the cREST google group. " );
+			return;
+		}		
 	}
+		
+	
 	
 	var ajaxCtx = request.ajaxctx;
 
@@ -1069,6 +1076,10 @@ function init(){
 		}
 	}).click(
 			function(){
+				var req = persistence.locateRequest(uriAc.val(), false);
+				if(req) {
+					loadSavedRequestInUI( req );
+				}
 				handleRequest(createAjaxCtxFromUI());
 				return false;
 			}
@@ -1474,7 +1485,16 @@ function createSavedReqForReqStore(name) {
 			function() {
 				var rname = $(this).parent().parent().find("input#item-name").val();
 				var req = persistence.locateRequest(rname, false);
-				var reqObj = new Request( "Copy of "+rname, req.ajaxctx );
+				var cname = rname+" copy";
+				if( persistence.locateRequest( cname, false) ) {
+					for(var i = 2; true; i++) {
+						cname = rname+" copy "+i;
+						if( !persistence.locateRequest( cname, false) )
+							break;
+					}
+				}
+				
+				var reqObj = new Request( cname, req.ajaxctx );
 				displayRequestEditor(reqObj,true);
 			});
 	
@@ -1665,16 +1685,32 @@ function displayRequestEditor(req,isNew) {
 					height:600,
 					title: "Request Editor",
 					buttons: { "Save" :
-								
 								   function() {
-										var reqFromEditor = createRequestFromEditor();//ensure trim is applied to name for save, and in this case name for further usage
+										var reqFromEditor = createRequestFromEditor();
 										var name = reqFromEditor.name;
 										var btnArea = $($(this).parent().find("button").parent());
 										var saveSpan = $(btnArea.find("button")[0]).find("span");
 										var cancelSpan = $(btnArea.find("button")[1]).find("span");
+										
+										//setup booleans to use with if statements so i don't keep getting confused...
+										var isEditWithRename = (isEdit && closuredReq.name != name);
+										var isReqInStore = (persistence.locateRequest( reqFromEditor.name )) ? true:false;
+										var isSaveButton = saveSpan.text()=="Save";
+										var isYesButton = saveSpan.text()=="Yes";
+										
+										if(log.isDebug) log.debug( "Save pressed. isNew: " + isNew + " isEditWithRename: " + isEditWithRename + " isReqInStore: " + isReqInStore + " isSaveButton: " + isSaveButton + " isYesButton: " + isYesButton );
 										//if (it's a new request being save) and if (if the request exists) and if (no duplicate warning has been seen), show the warning
-										if( (isNew && persistence.locateRequest( name ) && saveSpan.text()=="Save") || 
-											(isEdit && closuredReq.name != name && persistence.locateRequest( name ) && saveSpan.text()=="Save") ) {
+										
+										
+										//note: edit with rename doesn't require showing the "Yes" confirm button. only if
+										//they go to edit one and change the name, then we'll need to confirm an overwrite.
+										if( (isSaveButton && isReqInStore) && ((isNew) || (isEditWithRename)) ) {
+											if(log.isDebug) {
+												if(isNew)log.debug("Save button pressed for new request but the name already exists.");
+												if(isEditWithRename)log.debug("Save button pressed for edit with rename but the renamed name already exists.")
+											}
+//										if( (isNew && persistence.locateRequest( name ) && saveSpan.text()=="Save") || 
+//											(isEdit && closuredReq.name != name && persistence.locateRequest( name ) && saveSpan.text()=="Save") ) {
 											if(log.isDebug)log.debug( "NEW Request already exists with name '" +name+ "'. I'm gonna present a warning message and repurpose the buttons to confirm overwrite" );
 											var errmsg = $("div#error-msg-cloner").clone().attr("id","new-error-msg-cloner");
 											errmsg.find("p#msg").append("An item with that name exists, would you like to overwrite it?&nbsp;&nbsp;");
@@ -1683,24 +1719,28 @@ function displayRequestEditor(req,isNew) {
 											btnArea.prepend(errmsg.css("float","left").css("margin","6px").css("border","1px solid black"));
 											errmsg.css("display","")
 										//else the user must want to overwrite, or is editing an existing request (also overwrite)
-										} else if(saveSpan.text()=="Yes" || isEdit) {
-											if(log.isDebug) log.debug( "User chose to overwrite or update existing request with name '" +name+ "' and isNew = " + isNew );
-											var req = createRequestFromEditor();
-											var existing = (persistence.locateRequest( req.name ))? true:false;
-											if(closuredReq.name != req.name && isEdit ) {//renaming existing, don't create anew one in the UI like before, just rename the one there.
-												if(existing)//if they renamed a req to an existing one, remove it
-													persistence.removeRequest(req.name);
+										} else if( isYesButton || isEdit ) {
+											if(log.isDebug) log.debug( "User chose to overwrite or update existing request with name: '" +name+ "'" );
+											
+											if(isEditWithRename) {//they either edited it to a new name, or chose an existing name.
+												if(isReqInStore) {//okay, so they renamed one to a name that exists, so remove the old one with the same name
+													if(log.isDebug)log.debug( "saving an edit with rename. new name DID exist, removing..." );
+													persistence.removeRequest(reqFromEditor.name);
+												} else if(log.isDebug)log.debug( "saving an edit with rename. new name did NOT exist" );
 												
 												//the second name param causes replaceRequest to look for that name to 
 												//replace, not the one on req which much have been renamed in the editor
-												persistence.replaceRequest(req, closuredReq.name);
+												persistence.replaceRequest(reqFromEditor, closuredReq.name);
 												
+												//re-init the req store so the new one shows up. I first tried to just edit what's showing
+												//but event handlers got messed up and i was too lazy to dig into it. Thi'll work for now.
 												displayRequestStore();
 
 											} else {
-												persistence.replaceRequest(req);
+												if(log.isDebug)log.debug( "Saving new request with existing name, or saving edited request w/out name change." );
+												persistence.replaceRequest(reqFromEditor);
 												//if req store is showing and the name doesn't already exist
-												if(storeTabs.css("display")=="block" && !existing) {
+												if(storeTabs.css("display")=="block" && !isReqInStore) {
 													var items = storeTabs.find( "div#items")
 													var newItem = createSavedReqForReqStore(name);
 													items.append(newItem);
@@ -1710,11 +1750,10 @@ function displayRequestEditor(req,isNew) {
 											saveInput.remove();
 										} else { //totally new name so just save it.
 											if(log.isDebug) log.debug( "Editor Storing totally new request with name '" +name+ "'" );
-											var newReq = createRequestFromEditor();
-											persistence.storeRequest(newReq);
+											persistence.storeRequest(reqFromEditor);
 											if(storeTabs.css("display")=="block") {
 												var items = storeTabs.find( "div#items")
-												var newItem = createSavedReqForReqStore(newReq.name);
+												var newItem = createSavedReqForReqStore(reqFromEditor.name);
 												items.append(newItem);
 											}
 											saveInput.remove();
