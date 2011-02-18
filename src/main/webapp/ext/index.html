@@ -210,7 +210,7 @@
 		</h3>	
 		<div class="ui-widget-content ui-corner-bottom" id="responseDataDiv">
 			<div class="ui-widget-content" style="border-top: 0px; border-left: 0px; border-right: 0px; display: none" id="moreInfoDiv">
-				<div style="padding:10px;">
+				<div id="more-info" style="padding:10px;">
 					<div class="selectButtons" id="reqSelectButtons" style="float:right;padding-top:10px">
 						<button id="selectReqHeaders" style="display:none">Headers</button>
 						<button id="selectReqEntity" style="display:none">Entity</button>
@@ -221,7 +221,7 @@
 
 				</div>
 			</div>	
-			<div style="padding:10px;">
+			<div id="response-info" style="padding:10px;">
 				<span class="ui-widget-content" style="border-top:0px;border-left:0px;border-right:0px;" id="resp-time"></span>
 	       		<div class="selectButtons" id="respSelectButtons" style="float:right;padding-top:10px">
 						<button id="selectRespHeaders" style="display:none">Headers</button>
@@ -234,14 +234,25 @@
 		</div>
 	</div>
 	<!-- make it a cloner so uri and header history don't clash. JS will need to specify
-	new id -->
+	new id TODO - think this is the old one i can delete -->
 	<div id="edit-div-history-cloner" style="display:none;">
 		<textarea id="history" class="edit_history"></textarea>
 	</div>
 	<div id="save-request-input-cloner" style="display:none;font-weight:bold;">
+		<label for="method-select" >Method</label>
+		<select id="method-select">
+		  <option value="GET">Get</option>
+		  <option value="POST">Post</option>
+		  <option value="PUT">Put</option>
+		  <option value="OPTIONS">Options</option>
+		  <option value="HEAD">Head</option>
+		  <option value="DELETE">Delete</option>
+		</select><br/><br/>
+		
+		
 		Name<br/><input id="save-request-input-name" style="width: 99%;z-index: 100;"/><br/>
 		<br/>URI<br/><input id="save-request-input-uri" style="width: 99%;z-index: 100;"/><br/>
-		<br/>Headers<br/><textarea id="save-request-headers" rows="10" style="padding-top:0px;"></textarea><br/>
+		<br/>Headers<br/><textarea id="save-request-headers" rows="5" style="padding-top:0px;"></textarea><br/>
 		<br/>Entity<br/><textarea id="save-request-put_post_entity" rows="10" style="padding-top:0px;"></textarea><br/>
 	</div>
 	<!-- This isn't used anywhere yet, but might come in handy sometime. -->

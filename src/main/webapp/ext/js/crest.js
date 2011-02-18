@@ -568,11 +568,9 @@ function handleResponse( ajaxContext ) {
 			primary: 'ui-icon-newwin'
 		}
 	}).click( function(event) {
-		var newWinClone = $(this).parents("div#response").find("div#responseDataDiv").clone();
-
-		newWinClone.find("div#respSelectButtons").remove();
+		var clone = $(this).parents("div#response").find("div#response-info").find("pre").clone();
 		
-		newWinClone.dialog({
+		$("<div/>").append(clone).dialog({
 			autoOpen: true,
 			width: 600,
 			height: 400,
@@ -580,6 +578,17 @@ function handleResponse( ajaxContext ) {
 		});
 	});
 
+	newResp.find('button#save_request_scenario').button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-disk'
+		}
+		}).click(
+		function(event) {
+			var name = ajaxContext.method+" "+ajaxContext.uri;
+			var reqObj = new Request( name, ajaxContext );
+			displayRequestEditor(reqObj,true);
+		}).css("display", "");
 
 
 	//headers response
@@ -631,18 +640,6 @@ function handleResponse( ajaxContext ) {
 			newResp.find( "pre#reqEntityPre" ).css("display", "");
 			newResp.find( "code#reqEntityCode" ).html( htmlify( ajaxContext.reqEntity ) );
 		}
-
-		newResp.find('button#save_request_scenario').button({
-				text: false,
-				icons: {
-					primary: 'ui-icon-disk'
-				}
-				}).click(
-				function(event) {
-					var name = ajaxContext.method+" "+ajaxContext.uri;
-					var reqObj = new Request( name, ajaxContext );
-					displayRequestEditor(reqObj,true);
-				}).css("display", "");
 		
 		//do the select buttons.
 		newResp.find("div#reqSelectButtons").prepend("Select: ");
@@ -855,47 +852,47 @@ function selectedText() {
 	return selected;
 }
 
-function editHistory( id, title ) {
-	var histDialog = $("#edit-div-history-cloner").clone().attr("id", id );
-	var contents = histDialog.find("#history");
-	var hist = storageObj(id);
-	var histString = "";
-	for( var i = 0; i < hist.length; i++ ) {
-		histString += hist[i]+"\n";
-	}
-	//alert(histString);
-	contents.val(histString);
-	histDialog.dialog({
-		autoOpen: true,
-		modal: true,
-		width: 700,
-		height: 500,
-		title: title,
-		buttons: { "Save" :
-					   //todo, refactor so header history can reuse some of this code
-					   //do some clean up like ensuring that a real URI is entered and
-					   //that no duplicates are stored
-					   function() {
-							//not sure why i have to do $(contents).text() and not just
-							//contents.text() like above where i set it. w/out the $ the
-							//the .text() call is empty
-							var newText = contents.val();
-							var newTextArray = newText.split("\n");
-							//alert(hist);
-							var newHistory = $.map( newTextArray, function(item) {
-								item = $.trim(item);
-								//should probably check for valid HTTP uri.. will do later
-								if( item != "")
-									return item;
-							});
-
-							storageObj(id, newHistory.sort());
-							histDialog.dialog("close");
-					   },
-					"Cancel":function() {histDialog.dialog("close");}
-				 }
-	});
-}
+//function editHistory( id, title ) {
+//	var histDialog = $("#edit-div-history-cloner").clone().attr("id", id );
+//	var contents = histDialog.find("#history");
+//	var hist = storageObj(id);
+//	var histString = "";
+//	for( var i = 0; i < hist.length; i++ ) {
+//		histString += hist[i]+"\n";
+//	}
+//	//alert(histString);
+//	contents.val(histString);
+//	histDialog.dialog({
+//		autoOpen: true,
+//		modal: true,
+//		width: 700,
+//		height: 500,
+//		title: title,
+//		buttons: { "Save" :
+//					   //todo, refactor so header history can reuse some of this code
+//					   //do some clean up like ensuring that a real URI is entered and
+//					   //that no duplicates are stored
+//					   function() {
+//							//not sure why i have to do $(contents).text() and not just
+//							//contents.text() like above where i set it. w/out the $ the
+//							//the .text() call is empty
+//							var newText = contents.val();
+//							var newTextArray = newText.split("\n");
+//							//alert(hist);
+//							var newHistory = $.map( newTextArray, function(item) {
+//								item = $.trim(item);
+//								//should probably check for valid HTTP uri.. will do later
+//								if( item != "")
+//									return item;
+//							});
+//
+//							storageObj(id, newHistory.sort());
+//							histDialog.dialog("close");
+//					   },
+//					"Cancel":function() {histDialog.dialog("close");}
+//				 }
+//	});
+//}
 
 function loadSavedRequestInUI( nameOrReq, loadOpts ) {
 
@@ -1063,6 +1060,10 @@ function init(){
 
 		}).keypress(function(e) {
 		    if(e.keyCode == 13) {
+				var req = persistence.locateRequest(uriAc.val(), false);
+				if(req) {
+					loadSavedRequestInUI( req );
+				}
 		    	handleRequest(createAjaxCtxFromUI());
 		    }
 		});
@@ -1342,6 +1343,7 @@ function init(){
 						closeRequestStore();
 					},
 					"No": function() {
+						
 						$( this ).dialog( "close" );
 						closeRequestStore();
 					}
@@ -1420,13 +1422,15 @@ function displayRequestStore() {
 	}//saved request item loop	
 	removeStarFromText(storeTabs.find("a#edit-uri-history-tab"));
 	var uris = persistence.listURIs();
-	var uriTA = $("textarea#uri-history").val("").unbind();
+	var uriTA = $("textarea#uri-history").val("").unbind().data("bound",false);
+	
 	var uriLines = toLines(uris); 
 	uriTA.val(uriLines);
 	
 	removeStarFromText(storeTabs.find("a#edit-header-history-tab"));
 	var headers = persistence.listHeaders();	
-	var headerHistTA = $("textarea#header-history").val("").unbind(); 
+	var headerHistTA = $("textarea#header-history").val("").unbind().data("bound",false); 
+	
 	var headerLines = toLines(headers); 
 	headerHistTA.val(headerLines);
 	
@@ -1557,6 +1561,7 @@ function bindReqStoreTextareaEvents(ta) {
 	for(var i = 0; i < subjects.length; i++ ) {
 		var subject = $(subjects[i]);
 		if(! subject.data("bound") ) {
+			if(log.isDebug)log.debug( "binding text area events for req store: ", subject );
 			subject.bind("paste cut keypress", function(e) {
 				if(log.isDebug)log.debug( "EVENT type '" + e.type + "' for '" +e.srcElement.id+ "'", e);
 				if(e.srcElement.id=="uri-history") {
@@ -1566,8 +1571,8 @@ function bindReqStoreTextareaEvents(ta) {
 				} else {
 					log.error("Recieved an unexpected event for for req store *s",e);
 				}
-				$(this).unbind();
 				$(this).data("bound",false);
+				$(this).unbind();
 			});
 			subject.data("bound",true);		
 		} else {
@@ -1660,10 +1665,10 @@ function displayRequestEditor(req,isNew) {
 			var uri = saveInput.find("input#save-request-input-uri").val();
 			var reqHeaders = $.trim(saveInput.find("textarea#save-request-headers").val());
 			var reqEntity = saveInput.find("textarea#save-request-put_post_entity").val();
+			var method = saveInput.find("#method-select option:selected").val();
 			
 			var newCtx = new AjaxContext(
-					closuredReq.ajaxctx.method,
-					uri, reqEntity, textareaHeadersToObject(reqHeaders));
+					method, uri, reqEntity, textareaHeadersToObject(reqHeaders));
 			var newReq = new Request( 
 					name,
 					newCtx);
@@ -1677,6 +1682,13 @@ function displayRequestEditor(req,isNew) {
 		saveInput.find("input#save-request-input-uri").val(closuredReq.ajaxctx.uri);
 		saveInput.find("textarea#save-request-headers").val( formatHeadersForTextarea(closuredReq.ajaxctx.reqHeaders) );
 		saveInput.find("textarea#save-request-put_post_entity").val(closuredReq.ajaxctx.reqEntity);
+		
+		saveInput.find("#method-select option:selected").removeAttr("selected");
+		saveInput.find("#method-select option[value="+closuredReq.ajaxctx.method+"]").attr("selected","selected");
+		
+		
+//		$('#'+select_id+' option:selected').removeAttr('selected');
+//	    $('#'+select_id+' option[value='+option_val+']').attr('selected','selected');
 		$(saveInput).dialog(
 				{
 					autoOpen: true,
@@ -1688,6 +1700,10 @@ function displayRequestEditor(req,isNew) {
 								   function() {
 										var reqFromEditor = createRequestFromEditor();
 										var name = reqFromEditor.name;
+										if(!$.trim(name)) {
+											alert("Please name this request.");
+											return;
+										}
 										var btnArea = $($(this).parent().find("button").parent());
 										var saveSpan = $(btnArea.find("button")[0]).find("span");
 										var cancelSpan = $(btnArea.find("button")[1]).find("span");
@@ -1702,8 +1718,6 @@ function displayRequestEditor(req,isNew) {
 										//if (it's a new request being save) and if (if the request exists) and if (no duplicate warning has been seen), show the warning
 										
 										
-										//note: edit with rename doesn't require showing the "Yes" confirm button. only if
-										//they go to edit one and change the name, then we'll need to confirm an overwrite.
 										if( (isSaveButton && isReqInStore) && ((isNew) || (isEditWithRename)) ) {
 											if(log.isDebug) {
 												if(isNew)log.debug("Save button pressed for new request but the name already exists.");
@@ -1752,9 +1766,26 @@ function displayRequestEditor(req,isNew) {
 											if(log.isDebug) log.debug( "Editor Storing totally new request with name '" +name+ "'" );
 											persistence.storeRequest(reqFromEditor);
 											if(storeTabs.css("display")=="block") {
-												var items = storeTabs.find( "div#items")
 												var newItem = createSavedReqForReqStore(reqFromEditor.name);
-												items.append(newItem);
+												var names = storeTabs.find( "input#item-name");
+												var inserted = false;
+												console.log(names.length);
+												for(var i = 0; i < names.length; i++) {
+													var obj = $(names[i]);
+													var lowerName = reqFromEditor.name.toLowerCase();
+													if(obj.val().toLowerCase()>lowerName) {
+														obj.parent().parent().before(newItem);
+														console.log( "obj.parent().parent().before(newItem) with newItem: " );
+														console.log(newItem);
+														inserted=true;
+														break;
+													}
+												}
+												if(!inserted) {
+													console.log( "Appending to the end" );
+													var items = storeTabs.find( "div#items");	
+													items.append(newItem);
+												}
 											}
 											saveInput.remove();
 										}
