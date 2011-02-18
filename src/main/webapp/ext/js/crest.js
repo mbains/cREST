@@ -5,7 +5,7 @@
  * 3. Request Store!!
  * 4. XHR response time
  */
-var log = new Logger( false );
+var log = new Logger( true );
 function Logger(isDebug) {
 	if(isDebug==true)
 		this.isDebug = true;
@@ -1219,6 +1219,12 @@ function init(){
 		if($(this).is(":checked")) {
 			$(this).attr('checked', false).trigger("change").trigger("refresh");
 		}
+	}).mousedown(function(){
+		console.log( "down" );
+		$(this).parent().find("label").addClass("ui-state-active");
+	});
+	$("button#help_page").button().click(function() {
+		document.location = "/help.html";
 	});
 	$("input#req_store").button().click(function() {
 		storeTabs.find("a#load-request-tab").trigger("click");
@@ -1444,7 +1450,7 @@ function displayRequestStore() {
 	storeTabs.css("z-index",oneAbove);
 	//this is pretty slow and not cause of localStorage, jQuery is doing a lot up there when there's
 	//a lot of items. I'll figure out a better way to handle this later, for now it works.
-	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis.");
+	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis for " + names.length + " items.");
 }
 
 function createSavedReqForReqStore(name) {
@@ -1811,6 +1817,23 @@ function displayRequestEditor(req,isNew) {
 		saveInput.find("input#save-request-input-name").blur();
 	})(req,isNew);
 	//saveInput.siblings(".ui-dialog-titlebar").hide();
+}
+
+function rawSavedRequests() {
+	var raw = storage( persistence.reqStoreKey );
+	var popup = $("div#edit-div-history-cloner").clone().attr("id","newid");
+	popup.find("textarea").val(raw);
+	
+	popup.dialog({
+				autoOpen: true,
+				modal: true,
+				width: 700,
+				height:600,
+				title: "<i>Saved Requests</i> JSON"
+			});
+}
+function commands() {
+	console.log("rawSavedRequests() - this will popup a textarea containing all your saved requests in JSON format. I use it to copy them over to another computer with the cREST on it. To do this just copy the JSON from the textarea, and in the console of your target cREST client, put: persistence.storeRequestsAndNames(yourJSON). This will overwrite the saved requests with the contents of yourJSON.");
 }
 function setupTestButton() {
 	var name = "simple";

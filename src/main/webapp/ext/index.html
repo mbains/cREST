@@ -20,14 +20,20 @@
     	<script type="text/javascript" src="js/jquery-fieldselection.js"></script>
     	
 		<script type="text/javascript" src="js/crest.js"></script>
-		<!-- script type="text/javascript" src="js/rfc2626.response.codes.js"></script>  -->
+		<!-- 
+		mybuttontextsize ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only
+		mybuttontextsize ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only
+		script type="text/javascript" src="js/rfc2626.response.codes.js"></script>  -->
 	</head>
 <body>
 <div id="screen-disable" style="display:none;position:absolute; opacity:0.3; z-index:1000; top:0; left:0; width:100%; height:100%; background-color:#000000;">
 </div>
 <div id="body">
 	<div id="requestBuilder" style="padding-bottom: 5px;">
-		<h3 id="requestBuilderHeader"class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
+		<h3 id="requestBuilderHeader" class="ui-corner-top ui-widget-header" style="height: 29px; margin: 0px;">
+			<div class="reqBuidlerButtons" style="float:right;padding: 0px;padding-right:3px;padding-top:1px;" >
+				<button id="help_page" class="mybuttontextsize">?</button>
+		 	</div>
 	 		<div class="reqBuidlerButtons" style="float:right;padding: 3px;" >
 				<input type="checkbox" id="reset_request_builder" /><label class="mybuttontextsize" for="reset_request_builder">Reset</label>
 		 	</div>
@@ -234,7 +240,7 @@
 		</div>
 	</div>
 	<!-- make it a cloner so uri and header history don't clash. JS will need to specify
-	new id TODO - think this is the old one i can delete -->
+	new id -->
 	<div id="edit-div-history-cloner" style="display:none;">
 		<textarea id="history" class="edit_history"></textarea>
 	</div>
