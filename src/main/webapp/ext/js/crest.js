@@ -151,7 +151,32 @@ function Persistence() {
 	this.listRequestNamesSortedByDate = function() {
 		return storageObj(this.reqStoreKey+"Items");
 	}
+	
+	this.getHomeRequest = function() {
+		var store = storageObj(this.reqStoreKey);
+		//store.homeRequest = null;
+		if(store.homeRequest) {
+			if(log.isDebug)log.debug( "returning existing home Request..." );
+			return store.homeRequest;
+		}
+			
 
+		var ajaxCtx = new AjaxContext("GET","","","");
+		var homeReq = new Request("cREST Default",ajaxCtx);
+		homeReq.isDefault = true;
+		store.homeRequest = homeReq;
+		
+		storageObj(this.reqStoreKey,store);
+		if(log.isDebug)log.debug( "returning new cREST Default home request..." );
+		return store.homeRequest;
+	}
+	this.changeHomeRequest = function(name) {
+		var req = this.locateRequest(name, false);
+		var store = storageObj(this.reqStoreKey);
+		store.homeRequest = req;
+		storageObj(this.reqStoreKey,store);
+	}
+	
 	this.locateRequest = function(name,touch) {
 		if(log.isDebug)log.debug( "locateRequest('" + name + "')" );
 		var store = storageObj(this.reqStoreKey);
@@ -947,20 +972,21 @@ function loadSavedRequestInUI( nameOrReq, loadOpts ) {
 
 
 	//do header stuff
-	if( loadOpts.headers ) {
+	if( loadOpts.headers && ajaxCtx.reqHeaders && ajaxCtx.reqHeaders.length > 0 ) {
 		var headers = "";
-		if( ajaxCtx.reqHeaders && ajaxCtx.reqHeaders.length > 0 ) {
-			headers = formatHeadersForTextarea( ajaxCtx.reqHeaders );
-			headersTa.textarea.val(headers);
-
-			//only toggle (click) if it's not already open
-			if($("input[id=modify_headers]:checked").length==0) {
-				$("#modify_headers").button().trigger("click");
-				$("#modify_headers").button().trigger("change");
-				$("#modify_headers").button("refresh");				
-			}
-		} else headersTa.textarea.val("");//TODO - test this out.		
+		headers = formatHeadersForTextarea( ajaxCtx.reqHeaders );
+		headersTa.textarea.val(headers);
+		//only toggle (click) if it's not already open
+		if($("input[id=modify_headers]:checked").length==0) {
+			$("#modify_headers").button().trigger("click").trigger("change").button("refresh");		
+		}
+	} else {
+		headersTa.textarea.val("");
+		//only toggle (click) if it's already open
+		if($("input[id=modify_headers]:checked").length>0)
+			$("#modify_headers").button().trigger("click").trigger("change").button("refresh");
 	}
+	
 	return request;
 }
 var uriAc;
@@ -1205,17 +1231,23 @@ function init(){
 		displayRequestStore();
 	});//click
 
-	$("button#reset_request_builder").button().click(function() {
-		var getButton = $("input#method_get").button();
-		getButton.trigger("click").trigger("change").trigger("refresh");
-		uriAc.val("");
-		headerAc.val("");
-		headersTa.textarea.val("");
-
-		if( $("div#modify_headers").css("display") != "none")
-			$("input#modify_headers").trigger("click").trigger("change").trigger("refresh");
-
-		putPostEntityTa.val("");
+	$("button#reset_request_builder").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-home'
+		}
+	}).click(function() {
+		loadSavedRequestInUI(persistence.getHomeRequest());
+//		var getButton = $("input#method_get").button();
+//		getButton.trigger("click").trigger("change").trigger("refresh");
+//		uriAc.val("");
+//		headerAc.val("");
+//		headersTa.textarea.val("");
+//
+//		if( $("div#modify_headers").css("display") != "none")
+//			$("input#modify_headers").trigger("click").trigger("change").trigger("refresh");
+//
+//		putPostEntityTa.val("");
 	});
 	
 	$("button#help_page").button({
@@ -1226,13 +1258,14 @@ function init(){
 	}).click(function() {
 		document.location = "/help.html";
 	});
-	$("button#req_store").button().click(function() {
-		storeTabs.find("a#load-request-tab").trigger("click");
-				
-		displayRequestStore();
-		if($(this).is(":checked")) {
-			$(this).attr('checked', false).trigger("change").trigger("refresh");
+	$("button#req_store").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-folder-open'
 		}
+	}).click(function() {
+		storeTabs.find("a#load-request-tab").trigger("click");
+		displayRequestStore();
 	});
 	
 	$("input#modify_headers").button().click(function() {
@@ -1422,6 +1455,11 @@ function displayRequestStore() {
 	var names = persistence.listRequestNames();
 	var itemList = savedReqs.find( "div#items" );
 	itemList.empty();//remove everything then build the list back up...
+	
+	
+	itemList.append(createSavedReqForReqStore(persistence.getHomeRequest().name,true));
+	itemList.append("<br/>");
+	
 	for(var i = 0; i < names.length; i++ ) {//saved request items...
 		var item = createSavedReqForReqStore(names[i]);
 		itemList.append(item);
@@ -1453,102 +1491,133 @@ function displayRequestStore() {
 	if(log.isDebug)log.debug("Time taken to display saved data tabs: " + timer.elapsed() + " millis for " + names.length + " items.");
 }
 
-function createSavedReqForReqStore(name) {
+function createSavedReqForReqStore(name,home) {
 	var item = $("<div class='ui-widget-content ui-corner-all' style='cursor: default;padding-left: 2px; padding-top:7px; padding-bottom:7px;margin-bottom:5px;'></div>");
 	//if(log.isDebug)log.debug( "adding name '" +names[i]+ "' to the request store" );
 	
 	
 	var itemName = $("<pre id='req-store-req-name' style='border:0px solid black;' class='saved' />").text(name);
 	var hiddenName = $("<input id='item-name' type='hidden'/>").val(name);//SOR
-	
 	itemName.append(hiddenName);
+	
 	var itemButtonsLeft = $("<div style='top:-4px;position:relative;float:left;padding-right:4px;'></div>");
 	
-	var runButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Loand and Run</button>").button({
-		text: false,
-		icons: {
-			primary: 'ui-icon-play'
-		}
-	}).click(
-			function() {
-				loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
-				$("#submit_request").trigger("click");
-			});
-	
-	var loadButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button({
-		text: false,
-		icons: {
-			primary: "ui-icon-arrowreturnthick-1-n"//'ui-icon-folder-open'
-		}
-	}).click(
-			function() {
-				loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
-			});
-	
-
-	var copyButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button({
-		text: false,
-		icons: {
-			primary: 'ui-icon-copy'
-		}
-	}).click(
-			function() {
-				var rname = $(this).parent().parent().find("input#item-name").val();
-				var req = persistence.locateRequest(rname, false);
-				var cname = rname+" copy";
-				if( persistence.locateRequest( cname, false) ) {
-					for(var i = 2; true; i++) {
-						cname = rname+" copy "+i;
-						if( !persistence.locateRequest( cname, false) )
-							break;
+	if(home==true) {
+		itemName.attr("id","home-request-item");
+		var homeButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Home</button>").button({
+			text: false,
+			disabled:true,
+			icons: {
+				primary: 'ui-icon-home',
+			}
+		});
+		itemButtonsLeft.append(homeButton);
+		item.append( itemButtonsLeft );
+		item.append( itemName.prepend("Home Request: ") );
+//		if(persistence.getHomeRequest().isDefault == true) {
+//			item.append("<br/>Note: You can use any saved request for your home request by clicking the home button next to it. The default request effectively resets the request builder with the GET method. It has no URI, headers, or entity. ");
+//		}
+		return item;
+	} else {
+		var runButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Load and Run</button>").button({
+			text: false,
+			icons: {
+				primary: 'ui-icon-play'
+			}
+		}).click(
+				function() {
+					loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
+					$("#submit_request").trigger("click");
+				});
+		
+		var loadButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Load</button>").button({
+			text: false,
+			icons: {
+				primary: "ui-icon-arrowreturnthick-1-n"//'ui-icon-folder-open'
+			}
+		}).click(
+				function() {
+					loadAndCloseRequestStore( $(this).parent().parent().find("input#item-name").val() );
+				});
+		
+		var homeButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Make me the home request.</button>").button({
+			text: false,
+			icons: {
+				primary: "ui-icon-home"//'ui-icon-folder-open'
+			}
+		}).click(
+				function() {
+					var newName = $(this).parent().parent().find("input#item-name").val();
+					var home = $(this).parent().parent().parent().find("#home-request-item");
+					persistence.changeHomeRequest(newName);
+					home.text("Home Request: " + newName);
+					
+		});
+ 
+		var copyButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button({
+			text: false,
+			icons: {
+				primary: 'ui-icon-copy'
+			}
+		}).click(
+				function() {
+					var rname = $(this).parent().parent().find("input#item-name").val();
+					var req = persistence.locateRequest(rname, false);
+					var cname = rname+" copy";
+					if( persistence.locateRequest( cname, false) ) {
+						for(var i = 2; true; i++) {
+							cname = rname+" copy "+i;
+							if( !persistence.locateRequest( cname, false) )
+								break;
+						}
 					}
-				}
-				
-				var reqObj = new Request( cname, req.ajaxctx );
-				displayRequestEditor(reqObj,true);
-			});
-	
-	var editButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button({
-		text: false,
-		icons: {
-			primary: 'ui-icon-pencil'
-		}
-	}).click(
-			function() {
-				displayRequestEditor($(this).parent().parent().find("input#item-name").val(),false);
-			});
-	
-	var deleteButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Trash</button>").button({
-		text: false,
-		icons: {
-			primary: 'ui-icon-trash'
-		}
-	}).click(
-			function() {
-				var success = persistence.removeRequest($(this).parent().parent().find("input#item-name").val());
-				if(!success) {
-					alert("Sorry. Unable to remove request named " + this.id );
-					return;
-				}
-				$(this).parent().parent().remove();
-			});
-	
-	itemButtonsLeft.append(runButton).append(loadButton).append(copyButton).append(editButton);
-	item.append( itemButtonsLeft );
-	item.append( itemName );
-	var itemButtonsRight = $("<div style='border:0px solid black; top:-17px;position:relative;float:right;padding-right:3px;'></div>");
-	itemButtonsRight.append(deleteButton);
-	item.append(itemButtonsRight);
-	item.dblclick(function (){
-		loadAndCloseRequestStore( $(this).find("input#item-name").val() );
-	}).mouseover(function () {
-	    $(this).css("background", "#ACDD4A");
-	    //$(this).css("font-weight", "bold");
-	  }).mouseout(function () {
-	    $(this).css("background", "");
-	    //$(this).css("font-weight", "");
-	  });
-	return item;
+					
+					var reqObj = new Request( cname, req.ajaxctx );
+					displayRequestEditor(reqObj,true);
+				});
+		
+		var editButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button({
+			text: false,
+			icons: {
+				primary: 'ui-icon-pencil'
+			}
+		}).click(
+				function() {
+					displayRequestEditor($(this).parent().parent().find("input#item-name").val(),false);
+				});
+		
+		var deleteButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Trash</button>").button({
+			text: false,
+			icons: {
+				primary: 'ui-icon-trash'
+			}
+		}).click(
+				function() {
+					var success = persistence.removeRequest($(this).parent().parent().find("input#item-name").val());
+					if(!success) {
+						alert("Sorry. Unable to remove request named " + this.id );
+						return;
+					}
+					$(this).parent().parent().remove();
+				});
+		
+		itemButtonsLeft.append(runButton).append(loadButton).append(homeButton).append(copyButton).append(editButton);
+		item.append( itemButtonsLeft );
+		item.append( itemName );
+		var itemButtonsRight = $("<div style='border:0px solid black; top:-17px;position:relative;float:right;padding-right:3px;'></div>");
+		itemButtonsRight.append(deleteButton);
+		item.append(itemButtonsRight);
+		item.dblclick(function (){
+			loadAndCloseRequestStore( $(this).find("input#item-name").val() );
+		}).mouseover(function () {
+		    $(this).css("background", "#ACDD4A");
+		    //$(this).css("font-weight", "bold");
+		  }).mouseout(function () {
+		    $(this).css("background", "");
+		    //$(this).css("font-weight", "");
+		  });
+		return item;
+	}
 }
 /*
  * used in two places, once during reqStore show, and then again after someone clicks save. This
