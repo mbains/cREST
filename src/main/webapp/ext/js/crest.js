@@ -898,6 +898,7 @@ function loadSavedRequestInUI( nameOrReq, loadOpts ) {
 
 	if(!loadOpts) {//default to load everything
 		var loadOpts = {
+				method:true,
 				uri:true,
 				headers:true,
 				entity:true
@@ -1204,7 +1205,7 @@ function init(){
 		displayRequestStore();
 	});//click
 
-	$("input#reset_request_builder").button().click(function() {
+	$("button#reset_request_builder").button().click(function() {
 		var getButton = $("input#method_get").button();
 		getButton.trigger("click").trigger("change").trigger("refresh");
 		uriAc.val("");
@@ -1215,18 +1216,17 @@ function init(){
 			$("input#modify_headers").trigger("click").trigger("change").trigger("refresh");
 
 		putPostEntityTa.val("");
-
-		if($(this).is(":checked")) {
-			$(this).attr('checked', false).trigger("change").trigger("refresh");
-		}
-	}).mousedown(function(){
-		console.log( "down" );
-		$(this).parent().find("label").addClass("ui-state-active");
 	});
-	$("button#help_page").button().click(function() {
+	
+	$("button#help_page").button({
+		text: false,
+		icons: {
+			primary: 'ui-icon-help'
+		}
+	}).click(function() {
 		document.location = "/help.html";
 	});
-	$("input#req_store").button().click(function() {
+	$("button#req_store").button().click(function() {
 		storeTabs.find("a#load-request-tab").trigger("click");
 				
 		displayRequestStore();
@@ -1404,7 +1404,7 @@ function loadAndCloseRequestStore(name) {
 			entity:$("input[id=load_entity]:checked").length>0
 	}
 	closeRequestStore();
-	loadSavedRequestInUI(name,loadOpts);			
+	loadSavedRequestInUI(name);			
 }
 function closeRequestStore() {
 	storeTabs.css( "display", "none" );

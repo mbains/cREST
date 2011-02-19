@@ -12,14 +12,7 @@
 			<span><a rel='Section' href='#sec2'>Request Builder</a></span> 
 			<ol> 
 				<li>
-					<span><a rel='Section' href='#sec2.1'>Request Builder bar buttons</a></span>
-					<ol>
-						<li><span><a rel='Section' href='#sec2.1.1'>Method</a></span></li>
-						<li><span><a rel='Section' href='rfc2616-sec1.html#sec1.2'>Headers</a></span></li>
-						<li><span><a rel='Section' href='rfc2616-sec1.html#sec1.2'>Req Store</a></span></li>
-						<li><span><a rel='Section' href='rfc2616-sec1.html#sec1.2'>Reset</a></span></li>
-						<li><span><a rel='Section' href='rfc2616-sec1.html#sec1.2'>?</a></span></li>
-					</ol>
+					<span><a rel='Section' href='#sec2.1'>URI/Header auto-complete</a></span>
 				</li> 
 		      	<li><span><a rel='Section' href='rfc2616-sec1.html#sec1.2'>URI Input</a></span></li> 
 		      	<li><span><a rel='Section' href='rfc2616-sec1.html#sec1.3'>Header Input </a></span></li> 
@@ -47,18 +40,72 @@
 	</ol>
 	<h2><a id='sec1'>1 </a> Introduction</h2>
 	<p>
-		The cREST Client extension is a RESTful service client aiming to make the client's life as 
-		easy as possible. The UI is divided into two high level sections including the Request Builder, 
-		and Responses. The Request Builder includes sections for specifying a URI, an HTTP method, headers, 
-		and a request entity. The Responses section is where, well, your RESTful service responses are kept 
-		including a bunch of useful goodies that help you manage them.
+		The cREST Client extension is an http client with RESTful services in mind. The UI is 
+		divided into two high level sections including the Request Builder, and Responses. The 
+		Request Builder includes sections for specifying a URI, an HTTP method, headers, and a 
+		request entity. The Responses section is where information about your http responses 
+		are kept including some useful features that help you manage them.
+		
+		Big thanks to the jQuery for a cool api.
 	</p>
+	<p>	
+		Please feel free to speak up in 
+		<a href="http://groups.google.com/group/crest-client">http://groups.google.com/group/crest-client</a>
+		if you have questions/comments about the extension. Also let me know if there's anything I can do to 
+		make this help page more useful.
+	</p>
+	
 	<h2><a id='sec2'>2 </a> Request Builder</h2>
 	<p>
-		The request builder contains all the ui components you need to use in order to submit an http request. 
+		The request builder contains all the ui components you need in order to submit an http request. This is where you
+		can specify a URI, select your http method, add any headers, or include a request entity for PUT/POST requests.
+		
+		The following sections will outline some of the more notable Request Builder fields/buttons. 
 	</p>
-	<h3><a id="sec2.1">Request Builder bar buttons</a></h3>
-	<h4><a id="sec2.1.1">Method</a></h4>
+	<h3><a id='sec2'>2.1 </a> URI/Header Auto-complete</h3>
+	<p>
+		The autocomplete fields for URIs and headers will suggest options that it finds in your URI history, header history, or 
+		your saved requests. The URI and header history both get populated each time you use a new URI or header in a successful 
+		request. In addition, you can manually edit the URI/header history by clicking the pencil button next to the 
+		coorisponding autocomplete field. 
+	</p>
+	<p>
+		Saved requests will be covered in more detail <a href="#">TODO: HERE</a>. Know that if you select one from 
+		the URI autocomplete dropdown list, it will populate the request builder with all of its data. This includes URI,
+		method, and any headers or request entity that may be present.
+		If you select a saved request from the header autocomplete dropdown, it will load all of that request's headers.
+		Saved requests are named by you, so you should be able
+		to distinguish them from your URIs/headers in the autocomplete suggestions.  
+	</p>
+	<p>
+		Items for the autocomplete dropdown are selected in a case insensitive way. The suggested
+		items only need to contain the <i>term</i> you've typed, not start with it. In addition, 
+		you can specify multiple terms by separating them with a space. This comes in handy when you
+		have many URIs that only differ by a little. 
+	</p>
+	<h3><a id='sec2'>2.1 </a> Saved Requests</h3>
+	<p>
+		cREST now lets you save your request for re-use later. Before you can save your first request, you'll
+		need to submit one. In the toolbar of the response, you'll see a little disk icon with the "save request"
+		tooltip. This button will launch the request editor where you can make some changes (typically giving it a 
+		better name), and then save the request in the Req Store.
+		<br/>
+		<br/>
+		After you've saved a request, you can do some handy things with it. As previously mentioned, the name of your
+		saved requests will show up in the URI and header autocomplete suggestions. You can also click the Req Store
+		button for more options. The first play button will load the request in the Request Builder and run it. The 
+		second button (arrow) will only load the request in the Request Builder. The last two buttons are used to 
+		copy/edit a request anyway you see fit.
+		<br/><br/>
+		Consider the properties of a saved request:
+		<br/><br/>
+		Name<br/>
+		Method<br/>
+		URI<br/>
+		Headers<br/>
+		Entity<br/>
+		<br/>
+	</p>
 </div>
 </body>
 </html>
