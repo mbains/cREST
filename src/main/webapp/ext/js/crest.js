@@ -401,6 +401,7 @@ function createAjaxCtxFromUI() {
  */
 
 function handleRequest(ajaxCtx) {
+	
     try {
 		ajaxCtx.xhr.onreadystatechange = (function(closuredAjaxContext) {
 	    	return function() { handleResponse(closuredAjaxContext);};
@@ -1086,13 +1087,8 @@ function init(){
 			});
 
 		}).keypress(function(e) {
-		    if(e.keyCode == 13) {
-				var req = persistence.locateRequest(uriAc.val(), false);
-				if(req) {
-					loadSavedRequestInUI( req );
-				}
-		    	handleRequest(createAjaxCtxFromUI());
-		    }
+		    if(e.keyCode == 13)
+		    	$("#submit_request").button().trigger("click");
 		});
 
 
@@ -1104,7 +1100,13 @@ function init(){
 		}
 	}).click(
 			function(){
-				var req = persistence.locateRequest(uriAc.val(), false);
+				var val = uriAc.val();
+				if(crestCommandExp.test(val)) {
+					handleRequestCommand(val);
+					return;
+				}
+				
+				var req = persistence.locateRequest(val, false);
 				if(req) {
 					loadSavedRequestInUI( req );
 				}
@@ -1416,6 +1418,7 @@ function init(){
 }
 var gStarReplaceExp = /\*/g;
 var startsWithStarExp = /^\*/;
+var crestCommandExp = /^crest\./;
 
 function removeStarFromText(jqObj) {
 	jqObj.text(jqObj.text().replace(gStarReplaceExp,""));
@@ -1618,6 +1621,18 @@ function createSavedReqForReqStore(name,home) {
 		  });
 		return item;
 	}
+}
+
+function handleRequestCommand(command) {
+	var cmd = command.split(crestCommandExp);
+	console.log(cmd);
+	if(cmd[1].indexOf("eval=")!=-1) {
+		var evalExp = cmd[1].split("eval=")[1]
+		console.log(evalExp);
+		eval(evalExp);
+	}
+		
+	
 }
 /*
  * used in two places, once during reqStore show, and then again after someone clicks save. This
