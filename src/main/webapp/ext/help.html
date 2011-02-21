@@ -1,5 +1,6 @@
 <html>
 <head>
+	<link type="text/css" href="css/rest-client-css.css" rel="stylesheet" />
 </head>
 <body>
 <a href="#" onclick="javascript:document.location='/index.html'">Back</a>
@@ -67,15 +68,15 @@
 		The autocomplete fields for URIs and headers will suggest options that it finds in your URI history, header history, or 
 		your saved requests. The URI and header history both get populated each time you use a new URI or header in a successful 
 		request. In addition, you can manually edit the URI/header history by clicking the pencil button next to the 
-		coorisponding autocomplete field. 
+		coorisponding autocomplete field. You can also get to your URI/header history from the request store button discussed below.
 	</p>
 	<p>
-		Saved requests will be covered in more detail <a href="#">TODO: HERE</a>. Know that if you select one from 
+		Saved requests will be covered in more detail <a href="#">TODO: below</a>. Know that if you select one from 
 		the URI autocomplete dropdown list, it will populate the request builder with all of its data. This includes URI,
 		method, and any headers or request entity that may be present.
 		If you select a saved request from the header autocomplete dropdown, it will load all of that request's headers.
 		Saved requests are named by you, so you should be able
-		to distinguish them from your URIs/headers in the autocomplete suggestions.  
+		to easily distinguish them from your URIs and headers in the autocomplete suggestions.  
 	</p>
 	<p>
 		Items for the autocomplete dropdown are selected in a case insensitive way. The suggested
@@ -85,27 +86,70 @@
 	</p>
 	<h3><a id='sec2'>2.1 </a> Saved Requests</h3>
 	<p>
-		cREST now lets you save your request for re-use later. Before you can save your first request, you'll
-		need to submit one. In the toolbar of the response, you'll see a little disk icon with the "save request"
-		tooltip. This button will launch the request editor where you can make some changes (typically giving it a 
-		better name), and then save the request in the Req Store.
-		<br/>
-		<br/>
-		After you've saved a request, you can do some handy things with it. As previously mentioned, the name of your
-		saved requests will show up in the URI and header autocomplete suggestions. You can also click the Req Store
-		button for more options. The first play button will load the request in the Request Builder and run it. The 
-		second button (arrow) will only load the request in the Request Builder. The last two buttons are used to 
-		copy/edit a request anyway you see fit.
-		<br/><br/>
-		Consider the properties of a saved request:
-		<br/><br/>
-		Name<br/>
-		Method<br/>
-		URI<br/>
-		Headers<br/>
-		Entity<br/>
-		<br/>
+		cREST lets you save requests for re-use later. Each response has a save button (disk icon) that allows you 
+		to save the request that produced the response. When clicked, the request editor will be launched so you 
+		can make some changes (typically giving it a better name), and then save the request. 
 	</p>
+	<p>
+		Once the request is saved, it can be used to populate fields within the Request Builder. As previously 
+		mentioned, the names of your saved requests will show up in the URI and header autocomplete suggestions 
+		and when selected will populate corresponding Request Builder fields. There is also a new home button on 
+		the Request Builder tool bar. You can associate one of your saved request with it so that when it's 
+		clicked, the request will be loaded. Specifying this request is done with the "request store" covered in 
+		the next section.
+	</p>
+	<p>
+		Note that these requests don't necessarily need to represent a valid http request. You might create one 
+		that only has commonly used headers with no URI or request method.	
+	</p>
+
+	<h3><a id='sec2'>2.1 </a> Request Store</h3>
+	<p>
+		You can access/edit your stored data by clicking the folder icon. Three kinds of data are saved, each with their own tab:
+		<ol>
+			<li>
+				Saved Requests
+				<p>
+					This tab allows you to manage your saved requests. The first row indicates which request is associated with 
+					your home button. By default, cREST associates a request with no URI, headers, or entity and a GET request method.
+					Next you'll see your saved requests if you have any. They are ordered alphabetically. Each request has the 
+					following buttons (from left to right):
+					<ol>
+						<li>
+							Play - The saved request will be loaded into the Request Builder and a request will be submitted. 
+						</li>
+						<li>
+							Up Array - This loads the request in the Request Builder. Double clicking the request outside of the buttons also does this. 
+						</li>
+						<li>
+							Home      - Sets the request to your home button. 
+						</li>
+						<li>
+							Copy       - This allows you to copy the request. It will display the request editor with a new name which can be modified before you save. 
+						</li>
+						<li>
+							Edit         - This allows you to edit the request. 
+						</li>
+						<li>
+							Trash       - deletes the saved request. 
+						</li>
+					</ol>			
+				</p>
+			</li>
+			<li>
+				URI History 
+				<p>
+					These are all the URIs you've targeted that have returned successful responses. This tab displays a textarea for you 
+					to manually edit your URIs. These URIs are used for the URI autocomplete suggestions.
+				</p>				
+			</li>
+			<li>
+				Header History 
+				<p>
+					This tab is identical to the URI history, only it's for your headers and the header autocomplete.				
+				</p>				
+			</li>
+		</ol>
 </div>
 </body>
 </html>

@@ -1557,7 +1557,7 @@ function createSavedReqForReqStore(name,home) {
 					
 		});
  
-		var copyButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Edit</button>").button({
+		var copyButton = $("<button style='padding:0px;margin:0px;margin-left:2px;'>Copy</button>").button({
 			text: false,
 			icons: {
 				primary: 'ui-icon-copy'
@@ -1859,8 +1859,8 @@ function displayRequestEditor(req,isNew) {
 												var newItem = createSavedReqForReqStore(reqFromEditor.name);
 												var names = storeTabs.find( "input#item-name");
 												var inserted = false;
-												console.log(names.length);
-												for(var i = 0; i < names.length; i++) {
+												//start at 1 so home button row isn't included
+												for(var i = 1; i < names.length; i++) {
 													var obj = $(names[i]);
 													var lowerName = reqFromEditor.name.toLowerCase();
 													if(obj.val().toLowerCase()>lowerName) {
