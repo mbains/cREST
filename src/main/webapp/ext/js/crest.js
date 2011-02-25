@@ -1,11 +1,4 @@
-/**
- * New Features: 
- * 1. Select for headers/entity (req and resp)
- * 2. awesome bars - new req store name support, enter button to submit
- * 3. Request Store!!
- * 4. XHR response time
- */
-var log = new Logger( true );
+var log = new Logger( false );
 function Logger(isDebug) {
 	if(isDebug==true)
 		this.isDebug = true;
