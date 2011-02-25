@@ -1645,15 +1645,25 @@ function bindReqStoreTextareaEvents(ta) {
 		var subjects = ta;
 	} else var subjects = storeTabs.find("textarea");
 	
-	//using this data("bound") to prevent the binding multiple times on a TA
-	//this was happening when someone clicks save a few times each click resulted
-	//in this method binding more "paste cut keypress" handlers so many *s were being added
+
 	for(var i = 0; i < subjects.length; i++ ) {
 		var subject = $(subjects[i]);
 		if(! subject.data("bound") ) {
 			if(log.isDebug)log.debug( "binding text area events for req store: ", subject );
-			subject.bind("paste cut keypress", function(e) {
+			subject.bind("paste cut keypress keydown", function(e) {
 				if(log.isDebug)log.debug( "EVENT type '" + e.type + "' for '" +e.srcElement.id+ "'", e);
+				
+				/* keypress only picks up pritable chars so keydown is attached, but since
+				 * keydown is trigged for all keys, we want to make sure we only add a *
+				 * for keydowns we care about. We don't care about tab or esc, but we do care
+				 * about delete (8)... what others??
+				 */
+				if(e.type=="keydown") {
+					if(e.which !=8 )//8 == delete
+						return;
+				}
+					
+				
 				if(e.srcElement.id=="uri-history") {
 					storeTabs.find("a#edit-uri-history-tab").prepend("*");
 				} else if(e.srcElement.id=="header-history") {
