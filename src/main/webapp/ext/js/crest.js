@@ -741,31 +741,44 @@ function htmlify( str ) {
 	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/**
+ * Something wierd... so this method can have both items that are just
+ * strings, or items that have labels (like saved requests). If the array
+ * of items starts with those that have lables and ends with strings,
+ * then all the strings are left out of the autocomplete. But if the
+ * strings show up first in the array, everything shows in drop down
+ * as expected. 
+ */
 function awesomeBar( items, request, response) {
-	var terms = $.trim( request.term ).split( " " );
-	var filteredItems = 
-		$.map(items, function(item) {
-			if( item.label )
-				var label = item.label;
-			else 
-				var label = item;//must be a string
+	var filteredItems;
+	if(request.term=="*") {
+		filteredItems = items;
+	} else {
+		var terms = $.trim( request.term ).split( " " );
+		filteredItems = 
+			$.map(items, function(item) {
+				if( item.label )
+					var label = item.label;
+				else 
+					var label = item;//must be a string
 
 
-			for( var i = 0; i < terms.length; i++ ) {
-				if( label.toLowerCase().indexOf( terms[i].toLowerCase() ) == -1  )
-					return;
-			}
-			//this could return a string or a { label: "label", value: "val" }
-			return item;
+				for( var i = 0; i < terms.length; i++ ) {
+					if( label.toLowerCase().indexOf( terms[i].toLowerCase() ) == -1  )
+						return;
+				}
+				//this could return a string or a { label: "label", value: "val" }
+				return item;
 
-		});
+			});
 
-		//causes suggestions not to show because what the user typed already 
-		//matches the single suggestion left, so why show?
-		if( filteredItems.length == 1 && filteredItems[0] == uriAc.val() )
-			filteredItems = new Array();
-
-		response(filteredItems);
+			//causes suggestions not to show because what the user typed already 
+			//matches the single suggestion left.
+			if( filteredItems.length == 1 && filteredItems[0] == uriAc.val() )
+				filteredItems = new Array();		
+	}
+	//console.log(filteredItems);
+	response(filteredItems);
 }
 /**
  * I got this code from... 
@@ -1013,15 +1026,25 @@ function init(){
 	 */
 	uriAc = $("#uri_autocomplete").autocomplete( {
 			source: function(req, resp){
-					var uris = persistence.listURIs();
+					
 					//{ label: lab, value: val };
 					var names = persistence.listRequestNames();
 					var nameObjs = [];
 					for(var i = 0; i < names.length; i++) {
 						nameObjs[i] = { label: names[i], value: names[i], crestType:"savedReq" }
 					}
-
-					awesomeBar(uris.concat(nameObjs), req, resp);
+					
+					var uris = [];
+					var newTerm = getSavedCommandTerm(req.term);
+					if(newTerm!=null) {//this means someone only wants to see saved requests in dropdown
+						req.term = newTerm;
+						uris = nameObjs;
+					} else {
+						var uris = persistence.listURIs().concat(nameObjs);	
+					}
+					//see doc for awesomeBar - the uris array must always have string
+					//history before objects with labels
+					awesomeBar(uris, req, resp);
 			},
 			select: function(event, ui){
 				if(ui.item && ui.item.crestType == "savedReq") {
@@ -1122,27 +1145,35 @@ function init(){
 	$("div#header-autocomplete_buttonset").buttonset();
 
 	headerAc = $("#header-autocomplete").autocomplete( {
-		source: function(req, resp){ 
-			var alreadySelected = headersTa.textarea.val();
-			var headerHist = persistence.listHeaders();
+		source: function(req, resp){
 			
+			//create a list of saved request names for awesomeBar use...
 			var names = persistence.listRequestNames();
 			var nameObjs = [];
 			for(var i = 0; i < names.length; i++) {
 				nameObjs[i] = { label: names[i], value: names[i], crestType:"savedReq" }
 			}
-
-			//awesomeBar(uris.concat(nameObjs), req, resp);
 			
-			//remove autocomplete items that are already selected in the textarea.
-			var filteredHeaderHist = $.map(headerHist, function(item) {
-				if( alreadySelected.indexOf(item) != -1 )
-					return;
+			var filteredHeaderHist = [];
+			var newTerm = getSavedCommandTerm(req.term);
+			if(newTerm!=null) {//this means someone only wants to see saved requests in dropdown
+				req.term = newTerm;
+				filteredHeaderHist = nameObjs;
+			} else {//else we show header history and saved requests in qutocomplete.
+				var alreadySelected = headersTa.textarea.val();
+				var headerHist = persistence.listHeaders();
+				
+				//remove autocomplete items that are already selected in the textarea.
+				filteredHeaderHist = $.map(headerHist, function(item) {
+					if( alreadySelected.indexOf(item) != -1 )
+						return;
 
-				return item;//not already selected.
-			});
-			
-			awesomeBar( filteredHeaderHist.concat(nameObjs), req, resp);
+					return item;//not already selected.
+				}).concat(nameObjs);
+			}
+			//see doc for awesomeBar - the filteredHeaderHist array must always have string
+			//history before objects with labels
+			awesomeBar( filteredHeaderHist, req, resp);
 
 		},
 		minLength: 2, 
@@ -1412,6 +1443,25 @@ function init(){
 var gStarReplaceExp = /\*/g;
 var startsWithStarExp = /^\*/;
 var crestCommandExp = /^crest\./;
+var crestCommandSaved = /^crest\.saved:/;
+
+/**
+ * 
+ * @param term - the whole string as typed in autocomplete field
+ * @returns - null if no saved command is found ("crest.saved:") or
+ * a new term if a saved command is found. The new term will be the
+ * contents of the autocomplete minus "crest.saved:". If we see the
+ * command and the new term is empty string, the new term will be
+ * "* 
+ */
+function getSavedCommandTerm(term) {
+	var newTerm = null;
+	if(crestCommandSaved.test(term) ) {
+		newTerm = term.split(crestCommandSaved)[1];
+		newTerm = (newTerm == "") ? "*":newTerm;
+	}
+	return newTerm;
+}
 
 function removeStarFromText(jqObj) {
 	jqObj.text(jqObj.text().replace(gStarReplaceExp,""));
