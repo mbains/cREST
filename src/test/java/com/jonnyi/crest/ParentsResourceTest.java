@@ -1,25 +1,35 @@
 package com.jonnyi.crest;
 
-import static org.junit.Assert.assertTrue;
-
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.junit.Test;
 
-import com.jonnyi.crest.JAXBContextResolver;
 import com.jonnyi.crest.model.Parent;
-import com.jonnyi.crest.model.ParentCollection;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 
 
 public class ParentsResourceTest {
-
 	
 	@Test
+	public void testByTotals() {
+		BigDecimal tiaaMF = new BigDecimal("6416.34");
+		BigDecimal citiCheck = new BigDecimal("22965.80");
+		BigDecimal citiSave = new BigDecimal("25120.98");
+		BigDecimal wellsSave = new BigDecimal("10962.97");
+		BigDecimal wellsCheck = new BigDecimal("1880.86");
+		BigDecimal ameritrade = new BigDecimal("61370.19");
+		
+		BigDecimal[] all = new BigDecimal[] {
+			tiaaMF,citiCheck,citiSave,wellsSave,wellsCheck,ameritrade
+		};
+		BigDecimal t = new BigDecimal(0.0);
+		for (BigDecimal b : all) {
+			t = t.add(b);
+		}
+		System.out.println( t.setScale( 2, BigDecimal.ROUND_HALF_UP) );
+	}
+	
+	//@Test
 	public void parentsGet() {
 //		ClientConfig cc = new DefaultClientConfig();
 //		cc.getClasses().add(JAXBContextResolver.class);
