@@ -10,6 +10,14 @@ import javax.ws.rs.core.Response;
 @Path("/test")
 public class TestResource {
 
+
+	@GET
+	@Produces({ MediaType.APPLICATION_JSON})
+	@Path("json-dup-prop-bug" )
+	public String getDuplicateJSONPropertyBug() {
+		return "{\"pro{p\":\"val 1\",\"prop2\":\"val 2\"}";
+	}
+	
 	@GET
 	@Produces({ MediaType.APPLICATION_JSON})
 	@Path("pause/{seconds}" )

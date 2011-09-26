@@ -1,4 +1,4 @@
-var log = new Logger( false );
+var log = new Logger( true );
 function Logger(isDebug) {
 	if(isDebug==true)
 		this.isDebug = true;
@@ -1201,9 +1201,15 @@ function init(){
 			
 			if(currentLines!="" && !/\n$/.test(currentLines))
 				currentLines+="\n";
-
 			
-			headersTa.textarea.text( currentLines ).append(newLines);
+			
+			//this causes a bug when you add to the textarea delete, and then try 
+			//to add additional headers. So i repla
+			//headersTa.textarea.text( currentLines ).append(newLines);
+			var lines = currentLines+newLines;
+			headersTa.textarea.val(lines);
+		
+			
 			headersTa.checkExpand();
 		},
 		close: function(event,ui) {
@@ -1682,6 +1688,8 @@ function handleRequestCommand(command) {
  * avoids handling the event while * is already shown.
  * 
  * Always need an array here to use $() when passing TA to this method
+ * 
+ * This method is used to detect changes for staring
  */
 function bindReqStoreTextareaEvents(ta) {
 	if(ta) {
